@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS jalai_db;
+USE jalai_db;

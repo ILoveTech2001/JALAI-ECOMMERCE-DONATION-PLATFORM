@@ -1,0 +1,341 @@
+/* Mobile-specific styles for Admin Dashboard */
+
+/* Mobile Table Responsiveness */
+@media (max-width: 768px) {
+  /* Hide less important table columns on mobile */
+  .admin-table .hide-mobile {
+    display: none;
+  }
+  
+  /* Stack table cells vertically on very small screens */
+  .admin-table-mobile {
+    display: block;
+  }
+  
+  .admin-table-mobile thead {
+    display: none;
+  }
+  
+  .admin-table-mobile tbody,
+  .admin-table-mobile tr,
+  .admin-table-mobile td {
+    display: block;
+    width: 100%;
+  }
+  
+  .admin-table-mobile tr {
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: white;
+  }
+  
+  .admin-table-mobile td {
+    border: none;
+    padding: 0.5rem 0;
+    position: relative;
+    padding-left: 50%;
+  }
+  
+  .admin-table-mobile td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+/* Mobile Card Layouts */
+@media (max-width: 640px) {
+  /* Adjust grid layouts for mobile */
+  .admin-grid-mobile {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .admin-grid-mobile-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Mobile-friendly buttons */
+  .admin-btn-mobile {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Mobile-friendly form inputs */
+  .admin-input-mobile {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Mobile-friendly modals */
+  .admin-modal-mobile {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  .admin-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for touch */
+  .admin-touch-spacing {
+    margin: 0.5rem 0;
+  }
+  
+  /* Mobile-friendly dropdowns */
+  .admin-dropdown-mobile {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 16px;
+  }
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  /* Sidebar overlay styles */
+  .admin-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  .admin-sidebar-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 16rem;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .admin-sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  /* Mobile header adjustments */
+  .admin-header-mobile {
+    padding: 0.75rem 1rem;
+  }
+  
+  .admin-header-mobile h2 {
+    font-size: 1.125rem;
+    margin-left: 0.5rem;
+  }
+}
+
+/* Mobile Stats Cards */
+@media (max-width: 640px) {
+  .admin-stats-mobile {
+    padding: 1rem;
+  }
+  
+  .admin-stats-mobile .icon {
+    height: 2rem;
+    width: 2rem;
+  }
+  
+  .admin-stats-mobile .value {
+    font-size: 1.5rem;
+  }
+  
+  .admin-stats-mobile .label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile Search and Filters */
+@media (max-width: 768px) {
+  .admin-search-mobile {
+    margin-bottom: 1rem;
+  }
+  
+  .admin-filters-mobile {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .admin-filters-mobile select,
+  .admin-filters-mobile input {
+    width: 100%;
+    font-size: 16px;
+    padding: 0.75rem;
+  }
+}
+
+/* Mobile Pagination */
+@media (max-width: 640px) {
+  .admin-pagination-mobile {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .admin-pagination-mobile .info {
+    order: 2;
+    font-size: 0.875rem;
+  }
+  
+  .admin-pagination-mobile .controls {
+    order: 1;
+    justify-content: center;
+  }
+}
+
+/* Mobile-specific utilities */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-flex {
+    display: flex;
+  }
+  
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full-width {
+    width: 100%;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-p-2 {
+    padding: 0.5rem;
+  }
+  
+  .mobile-p-3 {
+    padding: 0.75rem;
+  }
+  
+  .mobile-m-2 {
+    margin: 0.5rem;
+  }
+  
+  .mobile-gap-2 {
+    gap: 0.5rem;
+  }
+}
+
+/* Dark mode mobile adjustments */
+@media (max-width: 768px) {
+  .dark .admin-table-mobile tr {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .dark .admin-table-mobile td:before {
+    color: #d1d5db;
+  }
+}
+
+/* Mobile accessibility improvements */
+@media (max-width: 768px) {
+  /* Ensure text is readable */
+  .admin-mobile-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  /* Better contrast for mobile */
+  .admin-mobile-contrast {
+    color: #111827;
+  }
+  
+  .dark .admin-mobile-contrast {
+    color: #f9fafb;
+  }
+  
+  /* Focus states for mobile */
+  .admin-mobile-focus:focus {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+  }
+}
+
+/* Mobile loading states */
+@media (max-width: 768px) {
+  .admin-loading-mobile {
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+  
+  .admin-loading-mobile .spinner {
+    width: 2rem;
+    height: 2rem;
+    margin: 0 auto 1rem;
+  }
+}
+
+/* Mobile error states */
+@media (max-width: 768px) {
+  .admin-error-mobile {
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 0.5rem;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+  
+  .dark .admin-error-mobile {
+    background-color: #7f1d1d;
+    border-color: #991b1b;
+    color: #fecaca;
+  }
+}
+
+/* Mobile success states */
+@media (max-width: 768px) {
+  .admin-success-mobile {
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 0.5rem;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  }
+  
+  .dark .admin-success-mobile {
+    background-color: #14532d;
+    border-color: #166534;
+    color: #bbf7d0;
+  }
+}
