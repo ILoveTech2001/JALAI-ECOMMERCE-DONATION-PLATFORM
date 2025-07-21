@@ -2,7 +2,8 @@
 class ApiService {
   constructor() {
     // Use environment variable for production, fallback to localhost for development
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+    // Support both Vite (VITE_) and Create React App (REACT_APP_) environment variables
+    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
   }
 
