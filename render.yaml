@@ -3,10 +3,11 @@ services:
     name: jalai-backend
     runtime: java
     rootDir: backend/jalai-backend
-    buildCommand: ./mvnw clean package -DskipTests
+    buildCommand: chmod +x ./mvnw && ./mvnw clean package -DskipTests
     startCommand: java -jar target/jalai-backend-*.jar
     plan: free
     env: java
+    javaVersion: 17
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -19,7 +20,7 @@ services:
       - key: JWT_SECRET
         sync: false
     healthCheckPath: /actuator/health
-    
+
   # Optional: Add database service
   # - type: pserv
   #   name: jalai-database
