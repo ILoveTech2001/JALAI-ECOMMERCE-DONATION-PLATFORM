@@ -95,7 +95,17 @@
       "vite": "$vite"
     },
     "react-day-picker": {
+      "react": "$react",
+      "react-dom": "$react-dom",
       "date-fns": "$date-fns"
+    }
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
     }
   }
 }
