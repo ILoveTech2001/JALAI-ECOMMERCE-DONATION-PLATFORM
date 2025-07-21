@@ -1,7 +1,8 @@
 // API Service for JALAI Donation Platform
 class ApiService {
   constructor() {
-    this.baseURL = 'http://localhost:8080/api';
+    // Use environment variable for production, fallback to localhost for development
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
   }
 
@@ -119,7 +120,7 @@ class ApiService {
     } catch (error) {
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         console.error('Network error - Backend server may not be running:', error);
-        throw new Error('Unable to connect to server. Please check if the backend is running on http://localhost:8080');
+        throw new Error(`Unable to connect to server. Please check if the backend is running on ${this.baseURL}`);
       }
       console.error('API request failed:', error);
       throw error;
