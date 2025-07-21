@@ -56,11 +56,11 @@ public class DonationService {
     public Donation createDonation(Donation donation, UUID clientId, UUID orphanageId) {
         // Validate client
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new RuntimeException("Client not found with id: " + clientId));
+                .orElseThrow(() -> new RuntimeException("Client not found with id: " + clientId));
 
         // Validate orphanage
         Orphanage orphanage = orphanageRepository.findById(orphanageId)
-            .orElseThrow(() -> new RuntimeException("Orphanage not found with id: " + orphanageId));
+                .orElseThrow(() -> new RuntimeException("Orphanage not found with id: " + orphanageId));
 
         // Set relationships
         donation.setClient(client);
@@ -82,7 +82,7 @@ public class DonationService {
 
     public Donation updateDonation(UUID id, Donation donationDetails) {
         Donation donation = donationRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
 
         // Update allowed fields
         donation.setDonationType(donationDetails.getDonationType());
@@ -98,7 +98,7 @@ public class DonationService {
 
     public Donation confirmDonation(UUID id) {
         Donation donation = donationRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
 
         donation.confirmDonation();
         return donationRepository.save(donation);
@@ -106,10 +106,10 @@ public class DonationService {
 
     public Donation updateDonationStatus(UUID id, Donation.DonationStatus status) {
         Donation donation = donationRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
 
         donation.setStatus(status);
-        
+
         if (status == Donation.DonationStatus.CONFIRMED) {
             donation.setIsConfirmed(true);
         }
@@ -119,7 +119,7 @@ public class DonationService {
 
     public void cancelDonation(UUID id) {
         Donation donation = donationRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Donation not found with id: " + id));
 
         if (donation.getStatus() == Donation.DonationStatus.COMPLETED) {
             throw new RuntimeException("Cannot cancel completed donation");
@@ -193,7 +193,7 @@ public class DonationService {
     // Business method implementation
     public Donation trackDonation(UUID id) {
         return getDonationById(id)
-            .orElseThrow(() -> new RuntimeException("Donation not found"));
+                .orElseThrow(() -> new RuntimeException("Donation not found"));
     }
 
     private void validateDonation(Donation donation) {
@@ -214,15 +214,16 @@ public class DonationService {
                 break;
             case BOTH:
                 if ((donation.getCashAmount() == null || donation.getCashAmount().compareTo(BigDecimal.ZERO) <= 0) &&
-                    (donation.getItemDescription() == null || donation.getItemDescription().trim().isEmpty())) {
-                    throw new RuntimeException("Either cash amount or item description is required for combined donations");
+                        (donation.getItemDescription() == null || donation.getItemDescription().trim().isEmpty())) {
+                    throw new RuntimeException(
+                            "Either cash amount or item description is required for combined donations");
                 }
                 break;
         }
     }
 
-    public Donation scheduleDonation(UUID clientId, UUID orphanageId, Donation.DonationType donationType, 
-                                   LocalDateTime appointmentDate, BigDecimal cashAmount, String itemDescription) {
+    public Donation scheduleDonation(UUID clientId, UUID orphanageId, Donation.DonationType donationType,
+            LocalDateTime appointmentDate, BigDecimal cashAmount, String itemDescription) {
         Donation donation = new Donation();
         donation.setDonationType(donationType);
         donation.setAppointmentDate(appointmentDate);
@@ -238,5 +239,9 @@ public class DonationService {
 
     public Donation completeDonation(UUID id) {
         return updateDonationStatus(id, Donation.DonationStatus.COMPLETED);
+    }
+
+    public Donation rejectDonation(UUID id) {
+        return updateDonationStatus(id, Donation.DonationStatus.REJECTED);
     }
 }

@@ -13,7 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const navLinks = [
-  { to: "/OrphanageDashboard", label: "Dashboard", icon: faTachometerAlt },
+  { to: "/orphanage-dashboard", label: "Dashboard", icon: faTachometerAlt },
   { to: "/OrphanageMessages", label: "Messages", icon: faEnvelope },
   { to: "/OrphanageReviews", label: "Reviews", icon: faStar },
   { to: "/OrphangePostNeeds", label: "Post Needs", icon: faPlusCircle },

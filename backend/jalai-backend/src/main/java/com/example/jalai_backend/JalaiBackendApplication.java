@@ -2,10 +2,8 @@ package com.example.jalai_backend;
 
 import com.example.jalai_backend.model.Admin;
 import com.example.jalai_backend.model.Category;
-import com.example.jalai_backend.model.Client;
 import com.example.jalai_backend.repository.AdminRepository;
 import com.example.jalai_backend.repository.CategoryRepository;
-import com.example.jalai_backend.repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,9 +18,6 @@ public class JalaiBackendApplication implements CommandLineRunner {
 
 	@Autowired
 	private CategoryRepository categoryRepository;
-
-	@Autowired
-	private ClientRepository clientRepository;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -69,39 +64,16 @@ public class JalaiBackendApplication implements CommandLineRunner {
 			e.printStackTrace();
 		}
 
-		// Create test client user
-		try {
-			System.out.println("=== TEST CLIENT SETUP ===");
-
-			// Check if test client already exists
-			if (clientRepository.existsByEmail("test@jalai.com")) {
-				System.out.println("Test client already exists, deleting...");
-				clientRepository.findByEmail("test@jalai.com").ifPresent(clientRepository::delete);
-			}
-
-			// Create test client
-			System.out.println("Creating test client user...");
-
-			Client testClient = new Client();
-			testClient.setName("Test User");
-			testClient.setEmail("test@jalai.com");
-			testClient.setPassword(passwordEncoder.encode("test123"));
-			testClient.setPhone("123456789");
-			testClient.setLocation("Yaoundé");
-			testClient.setIsActive(true);
-
-			Client savedClient = clientRepository.save(testClient);
-			System.out.println("✅ Test client user created successfully!");
-			System.out.println("   Email: test@jalai.com");
-			System.out.println("   Password: test123");
-			System.out.println("   ID: " + savedClient.getId());
-
-			System.out.println("=== TEST CLIENT SETUP COMPLETE ===");
-
-		} catch (Exception e) {
-			System.err.println("❌ Error during test client setup: " + e.getMessage());
-			e.printStackTrace();
-		}
+		// Note: Test client users are now created by Flyway migrations
+		// See V2__Insert_Initial_Data.sql for sample users
+		System.out.println("=== TEST CLIENT INFO ===");
+		System.out.println("Sample users are created by Flyway migrations:");
+		System.out.println("   Email: john.doe@email.com, Password: Client123!");
+		System.out.println("   Email: jane.smith@email.com, Password: Client123!");
+		System.out.println("   Email: mike.johnson@email.com, Password: Client123!");
+		System.out.println("   Email: sarah.wilson@email.com, Password: Client123!");
+		System.out.println("   Email: david.brown@email.com, Password: Client123!");
+		System.out.println("=== TEST CLIENT INFO COMPLETE ===");
 
 		// Create default categories
 		try {

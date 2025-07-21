@@ -38,7 +38,7 @@ import ClientsManagement from './ClientsManagement';
 import ProductsManagement from './ProductsManagement';
 import OrdersManagement from './OrdersManagement';
 import OrphanagesManagement from './OrphanagesManagement';
-import DonationsManagement from './DonationsManagement';
+// import DonationsManagement from './DonationsManagement';
 import ReviewsManagement from './ReviewsManagement';
 import PaymentsManagement from './PaymentsManagement';
 import CategoriesManagement from './CategoriesManagement';
@@ -600,7 +600,7 @@ const AdminDashboard = () => {
             {activeTab === 'products' && <ProductsManagement />}
             {activeTab === 'orders' && <OrdersManagement />}
             {activeTab === 'orphanages' && <OrphanagesManagement />}
-            {activeTab === 'donations' && <DonationsManagement />}
+            {activeTab === 'donations' && <div className="p-6 text-center text-gray-500">Donations Management - Coming Soon</div>}
             {activeTab === 'reviews' && <ReviewsManagement />}
             {activeTab === 'payments' && <PaymentsManagement />}
             {activeTab === 'categories' && <CategoriesManagement />}

@@ -1,5 +1,6 @@
 package com.example.jalai_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -83,10 +84,12 @@ public class Orphanage {
     private LocalDateTime updatedAt;
 
     // Relationships
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "managed_by_admin_id")
     private Admin managedBy;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "orphanage", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Donation> donations;
 

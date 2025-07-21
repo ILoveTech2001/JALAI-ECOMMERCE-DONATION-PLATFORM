@@ -1,5 +1,6 @@
 package com.example.jalai_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -61,10 +62,12 @@ public class Donation {
     private LocalDateTime updatedAt;
 
     // Relationships
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "orphanage_id", nullable = false, insertable = false, updatable = false)
     private Orphanage orphanage;
@@ -93,6 +96,7 @@ public class Donation {
         CONFIRMED,
         IN_PROGRESS,
         COMPLETED,
-        CANCELLED
+        CANCELLED,
+        REJECTED
     }
 }

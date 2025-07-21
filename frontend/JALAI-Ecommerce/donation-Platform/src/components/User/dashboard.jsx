@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import apiService from "../../services/apiService"
@@ -48,8 +48,23 @@ import {
 } from "lucide-react"
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, loading, error } = useAuth()
   const navigate = useNavigate()
+  // Removed local loading and error state, use AuthContext
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    console.log('🔍 UserDashboard auth check:', { loading, user: !!user, userType: user?.userType });
+
+    // Only redirect if we're sure the user is not authenticated
+    // Give some time for the auth context to load the user
+    if (!loading && !user) {
+      console.log('🔴 UserDashboard: No user found, redirecting to login');
+      navigate('/login')
+    } else if (user) {
+      console.log('🟢 UserDashboard: User authenticated:', user.userType);
+    }
+  }, [loading, user, navigate])
   const [activeSection, setActiveSection] = useState("Dashboard")
   const [userName, setUserName] = useState("")
   const [userStats, setUserStats] = useState({
@@ -64,8 +79,7 @@ export default function Dashboard() {
   const [purchasedItems, setPurchasedItems] = useState([])
   const [donations, setDonations] = useState([])
   const [cartItems, setCartItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  // Removed duplicate loading and error state declarations
   const [categories, setCategories] = useState([])
   const [notifications, setNotifications] = useState([])
   const [selectedItem, setSelectedItem] = useState(null)
@@ -94,20 +108,13 @@ export default function Dashboard() {
     const fetchUserData = async () => {
       if (!user) return
 
-      setLoading(true)
-      setError(null)
-
       try {
-        // Use actual user name from AuthContext
         setUserName(user.name || "User")
-
-        // Initialize empty arrays
         setOrders([])
         setDonations([])
         setSellItems([])
         setPurchasedItems([])
 
-        // Get cart items from localStorage
         const savedCart = localStorage.getItem('cartItems')
         if (savedCart) {
           setCartItems(JSON.parse(savedCart))
@@ -115,42 +122,32 @@ export default function Dashboard() {
           setCartItems([])
         }
 
-        // Fetch categories using the specific method
         try {
           const categoriesResponse = await apiService.getCategories()
-          console.log('Categories response:', categoriesResponse)
           if (categoriesResponse && Array.isArray(categoriesResponse)) {
             setCategories(categoriesResponse)
           } else if (categoriesResponse && categoriesResponse.data) {
             setCategories(categoriesResponse.data)
           } else {
-            // Fallback to empty array if no categories
             setCategories([])
           }
-        } catch (error) {
-          console.error('Error fetching categories:', error)
-          // Set empty categories array as fallback
+        } catch {
           setCategories([])
         }
 
-        // Fetch user notifications
         try {
           const notificationsResponse = await apiService.getNotificationsByClient(user.id)
-          console.log('Notifications response:', notificationsResponse)
           if (notificationsResponse && Array.isArray(notificationsResponse)) {
             setNotifications(notificationsResponse)
           } else {
             setNotifications([])
           }
-        } catch (error) {
-          console.error('Error fetching notifications:', error)
+        } catch {
           setNotifications([])
         }
 
-        // Fetch user's existing products/sell items
         try {
           const sellItemsResponse = await apiService.getProductsByClient(user.id)
-          console.log('User products response:', sellItemsResponse)
           if (sellItemsResponse && Array.isArray(sellItemsResponse)) {
             const formattedItems = sellItemsResponse.map(item => ({
               ...item,
@@ -159,19 +156,15 @@ export default function Dashboard() {
               images: item.imageUrl ? [item.imageUrl] : ["/placeholder.svg?height=200&width=200"]
             }))
             setSellItems(formattedItems)
-            console.log('Loaded existing sell items:', formattedItems.length)
           } else {
             setSellItems([])
           }
-        } catch (error) {
-          console.error('Error fetching user products:', error)
+        } catch {
           setSellItems([])
         }
 
-        // Fetch user's existing donations
         try {
           const donationsResponse = await apiService.getDonationsByClient(user.id)
-          console.log('User donations response:', donationsResponse)
           if (donationsResponse && Array.isArray(donationsResponse)) {
             const formattedDonations = donationsResponse.map(donation => ({
               ...donation,
@@ -179,21 +172,15 @@ export default function Dashboard() {
               status: donation.status || "Completed"
             }))
             setDonations(formattedDonations)
-            console.log('Loaded existing donations:', formattedDonations.length)
           } else {
             setDonations([])
           }
         } catch (error) {
-          console.error('Error fetching user donations:', error)
           setDonations([])
         }
 
-        // Fetch user's existing orders (paginated response)
         try {
-          const ordersResponse = await apiService.getOrdersByClient(user.id, 0, 100) // Get first 100 orders
-          console.log('User orders response:', ordersResponse)
-
-          // Handle paginated response
+          const ordersResponse = await apiService.getOrdersByClient(user.id, 0, 100)
           let ordersArray = []
           if (ordersResponse && ordersResponse.content && Array.isArray(ordersResponse.content)) {
             ordersArray = ordersResponse.content
@@ -208,61 +195,48 @@ export default function Dashboard() {
               status: order.status || "Processing"
             }))
             setOrders(formattedOrders)
-            console.log('Loaded existing orders:', formattedOrders.length)
           } else {
             setOrders([])
           }
         } catch (error) {
-          console.error('Error fetching user orders:', error)
           setOrders([])
         }
 
         // Calculate user stats from fetched data
-        const calculateStats = () => {
-          // These will be updated after data is fetched
-          let totalSpent = 0
-          let totalEarned = 0
-          let itemsSold = 0
-          let itemsBought = 0
+        let totalSpent = 0
+        let totalEarned = 0
+        let itemsSold = 0
+        let itemsBought = 0
 
-          // Calculate from orders (total spent)
-          if (orders && orders.length > 0) {
-            totalSpent = orders.reduce((sum, order) => {
-              return sum + (order.totalAmount || 0)
-            }, 0)
-            itemsBought = orders.length
-          }
-
-          // Calculate from sell items (total earned)
-          if (sellItems && sellItems.length > 0) {
-            const soldItems = sellItems.filter(item => item.status === "Sold")
-            totalEarned = soldItems.reduce((sum, item) => {
-              return sum + (item.price || 0)
-            }, 0)
-            itemsSold = soldItems.length
-          }
-
-          setUserStats({
-            totalSpent,
-            totalEarned,
-            itemsSold,
-            itemsBought,
-          })
+        if (orders && orders.length > 0) {
+          totalSpent = orders.reduce((sum, order) => {
+            return sum + (order.totalAmount || 0)
+          }, 0)
+          itemsBought = orders.length
         }
 
-        // Initial calculation (will be 0 since data hasn't loaded yet)
-        calculateStats()
+        if (sellItems && sellItems.length > 0) {
+          const soldItems = sellItems.filter(item => item.status === "Sold")
+          totalEarned = soldItems.reduce((sum, item) => {
+            return sum + (item.price || 0)
+          }, 0)
+          itemsSold = soldItems.length
+        }
 
+        setUserStats({
+          totalSpent,
+          totalEarned,
+          itemsSold,
+          itemsBought,
+        })
       } catch (error) {
+        // Only log error
         console.error('Error fetching user data:', error)
-        setError('Failed to load user data')
-      } finally {
-        setLoading(false)
       }
     }
 
     fetchUserData()
-  }, [user])
+  }, [user, orders, sellItems])
 
   const menuItems = [
     { icon: Home, label: "Dashboard", active: activeSection === "Dashboard" },
@@ -311,8 +285,6 @@ export default function Dashboard() {
   const handleSubmitItem = async () => {
     if (formData.name && formData.price && formData.description && user) {
       try {
-        setLoading(true)
-
         const selectedPhotoUrls = photos
           .filter((photo) => formData.selectedPhotos.includes(photo.id))
           .map((photo) => photo.url)
@@ -360,8 +332,6 @@ export default function Dashboard() {
       } catch (error) {
         console.error('Error submitting product:', error)
         alert("Failed to submit product. Please try again.")
-      } finally {
-        setLoading(false)
       }
     } else {
       alert("Please fill in all required fields and make sure you're logged in.")
@@ -518,7 +488,9 @@ export default function Dashboard() {
     }
   }
 
-  const refreshNotifications = async () => {
+  // (removed misplaced import)
+
+  const refreshNotifications = useCallback(async () => {
     if (!user) return
     try {
       const notificationsResponse = await apiService.getNotificationsByClient(user.id)
@@ -534,7 +506,7 @@ export default function Dashboard() {
       // Set empty array on error instead of leaving undefined
       setNotifications([])
     }
-  }
+  }, [user])
 
   const refreshAllUserData = async () => {
     if (!user) return
@@ -598,7 +570,7 @@ export default function Dashboard() {
     }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, refreshNotifications])
 
   // Recalculate stats when data changes
   useEffect(() => {
@@ -645,7 +617,7 @@ export default function Dashboard() {
     }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, refreshAllUserData])
 
   const renderSellItemDashboard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
@@ -1304,7 +1276,7 @@ export default function Dashboard() {
               Sell an Item
             </Button>
             <Button
-              onClick={() => navigate('/bible-verse')}
+              onClick={() => navigate('/bible-verse', { replace: true })}
               className="h-20 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
             >
               <Heart className="w-6 h-6 mr-2" />

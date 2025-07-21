@@ -32,62 +32,57 @@ const GoogleLogo = () => (
 
 export default function LoginForm() {
   const navigate = useNavigate()
-  const { login, loading, error, clearError } = useAuth()
+  const { login, loading, clearError } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // Don't clear error immediately - let user see previous errors
+    clearError && clearError()
+    setError("") // Clear local error state
 
     try {
-      console.log('Attempting login with:', { email, password: '***' }); // Debug log
+      console.log('🟢 Starting login process...');
       const response = await login(email, password)
-      console.log('Login response:', response) // Debug log
+      console.log('🟢 Login response:', response);
 
-      // Check if response and user exist
-      if (!response || !response.user) {
-        console.error('Invalid response structure:', response);
-        throw new Error('Invalid response from server - no user data received')
-      }
-
-      // Clear any previous errors on successful login
-      clearError()
-
-      // Clear form fields on successful login
+      // Clear form
       setEmail("")
       setPassword("")
       setRememberMe(false)
 
-      // Redirect based on user type
-      const userType = response.user.userType
-      console.log('User type:', userType); // Debug log
-      console.log('Full user object:', response.user); // Debug log
+      // Get user type from response
+      const userType = response?.user?.userType
+      console.log('🟢 User type:', userType);
 
-      if (userType === 'ADMIN') {
-        console.log('Redirecting to admin dashboard'); // Debug log
-        navigate('/admin')
-      } else if (userType === 'ORPHANAGE') {
-        console.log('Redirecting to orphanage dashboard'); // Debug log
-        navigate('/orphanage-dashboard')
-      } else {
-        console.log('Redirecting to user dashboard'); // Debug log
-        navigate('/userDashboard')
-      }
+      // Give AuthContext a moment to fully set the user state before navigating
+      setTimeout(() => {
+        console.log('🟢 Navigating to dashboard...');
+        console.log('🟢 Current URL before navigation:', window.location.href);
+
+        if (userType === 'ADMIN') {
+          console.log('🟢 Navigating to /admin');
+          navigate('/admin', { replace: true })
+        } else if (userType === 'ORPHANAGE') {
+          console.log('🟢 Navigating to /orphanage-dashboard');
+          navigate('/orphanage-dashboard', { replace: true })
+        } else {
+          console.log('🟢 Navigating to /user-dashboard');
+          navigate('/user-dashboard', { replace: true })
+        }
+
+        // Log URL after navigation attempt
+        setTimeout(() => {
+          console.log('🟢 Current URL after navigation:', window.location.href);
+        }, 100);
+      }, 500); // Wait 500ms for AuthContext to fully update
+
     } catch (error) {
       console.error('Login failed:', error)
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      })
-      // Error is handled by the auth context and will be displayed
-      // Don't clear the error here so it persists
-
-      // Also show an alert for immediate feedback
-      alert(`Login failed: ${error.message}`)
+      setError(error.message || 'Login failed. Please try again.')
     }
   }
 

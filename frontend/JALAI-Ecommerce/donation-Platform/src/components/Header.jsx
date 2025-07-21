@@ -61,7 +61,7 @@ const Header = ({ handleCartClick, cartItems, handleProfileClick, user, onLogout
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
           {navLink("/", "Home")}
-          {navLink("/trade", "Trade")}
+          {navLink("/", "Shop")}
           {navLink("/bible-verse", "Donate")}
           <form onSubmit={handleSearch}>
             <input
@@ -145,8 +145,8 @@ const Header = ({ handleCartClick, cartItems, handleProfileClick, user, onLogout
           <div className="absolute top-full left-0 w-full bg-white shadow-md z-50 md:hidden animate-fade-in">
             <div className="flex flex-col gap-2 p-4 border-b">
               {navLink("/", "Home")}
-              {navLink("/trade", "Trade")}
-              {navLink("/donate", "Donate")}
+              {navLink("/", "Shop")}
+              {navLink("/bible-verse", "Donate")}
               <form onSubmit={handleSearch}>
                 <input
                   type="text"

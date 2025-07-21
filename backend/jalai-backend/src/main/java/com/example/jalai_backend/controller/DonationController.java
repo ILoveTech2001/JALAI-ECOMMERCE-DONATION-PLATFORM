@@ -127,6 +127,18 @@ public class DonationController {
         }
     }
 
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ORPHANAGE') or hasRole('ADMIN')")
+    public ResponseEntity<?> rejectDonation(@PathVariable UUID id) {
+        try {
+            Donation rejectedDonation = donationService.rejectDonation(id);
+            return ResponseEntity.ok(rejectedDonation);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     public ResponseEntity<?> cancelDonation(@PathVariable UUID id) {

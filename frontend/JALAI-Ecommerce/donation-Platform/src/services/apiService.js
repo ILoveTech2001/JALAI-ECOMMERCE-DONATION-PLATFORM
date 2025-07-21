@@ -68,6 +68,17 @@ class ApiService {
           return;
         }
 
+        if (response.status === 403) {
+          // Forbidden - user is authenticated but not authorized
+          // Don't clear tokens, just throw an error
+          const errorData = await response.text();
+          console.log('403 Forbidden error:', errorData);
+          const error = new Error(`Access denied: ${errorData || 'You do not have permission to access this resource'}`);
+          error.status = 403;
+          error.response = errorData;
+          throw error;
+        }
+
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
         console.error(`API Error: ${errorMessage}`, { url, status: response.status, errorData });
@@ -488,6 +499,27 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(orphanageData),
     });
+  }
+
+  // Orphanage donation management methods
+  async getOrphanageDonations(orphanageId) {
+    return this.request(`/donations/orphanage/${orphanageId}`);
+  }
+
+  async rejectDonation(donationId) {
+    return this.request(`/donations/${donationId}/reject`, {
+      method: 'POST',
+    });
+  }
+
+  async completeDonation(donationId) {
+    return this.request(`/donations/${donationId}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  async getTotalCashDonationsForOrphanage(orphanageId) {
+    return this.request(`/donations/total-cash/orphanage/${orphanageId}`);
   }
 
   // Admin methods

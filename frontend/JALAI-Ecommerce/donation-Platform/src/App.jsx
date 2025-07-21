@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
@@ -25,6 +25,7 @@ import OrphanageDetails from "./components/OrphanageDetails";
 import BibleVerseScreen from "./components/BibleVerseScreen";
 import ApiTest from "./components/ApiTest";
 import SimpleLogin from "./components/SimpleLogin";
+import SimpleLoginForm from "./components/SimpleLoginForm";
 import LoginPromptModal from "./components/LoginPromptModal";
 import PaymentModal from "./components/PaymentModal";
 
@@ -32,11 +33,13 @@ import PaymentModal from "./components/PaymentModal";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminLogin from "./components/Admin/AdminLogin";
 
+
 import "./assets/globals.css"; // Import global styles
 
 // Main App Content Component that uses AuthContext
 function AppContent() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Cart state and handlers
   const [cartItems, setCartItems] = useState([]);
@@ -115,8 +118,14 @@ function AppContent() {
   const handleProfileClick = () => {
     // Check if user is logged in
     if (user) {
-      // User is logged in, redirect to user dashboard
-      window.location.href = "/userDashboard";
+      // User is logged in, navigate to appropriate dashboard based on user type
+      if (user.userType === 'ADMIN') {
+        navigate('/admin');
+      } else if (user.userType === 'ORPHANAGE') {
+        navigate('/orphanage-dashboard');
+      } else {
+        navigate('/user-dashboard');
+      }
     } else {
       // User is not logged in, check if they have an account
       // For demo purposes, we'll simulate checking if user exists
@@ -126,10 +135,10 @@ function AppContent() {
       // Otherwise redirect to signup
       if (dummyUsers.length > 0) {
         // User has an account, redirect to login
-        window.location.href = "/login";
+        navigate('/login');
       } else {
         // User doesn't have an account, redirect to signup
-        window.location.href = "/signup";
+        navigate('/signup');
       }
     }
   };
@@ -316,13 +325,23 @@ function AppContent() {
               />
             }
           />
-          <Route path="/userDashboard" element={<UserDashboard />} />
-          <Route path="/OrphanageDashboard" element={<OrphanageDashboard />} />
-          <Route path="/OrphanageMessages" element={<OrphanageMessages />} />
-          <Route path="/OrphanageReviews" element={<OrphanageReviews />} />
-          <Route path="/OrphanageSettings" element={<OrphanageSettings />} />
+          <Route path="/user-dashboard" element={<UserDashboard />} />
+          {/* Redirect from old path to new standardized path */}
+          <Route path="/userDashboard" element={<Navigate to="/user-dashboard" replace />} />
 
-          {/* New consolidated routes */}
+          {/* Standardized orphanage routes */}
+          <Route path="/orphanage-dashboard" element={<OrphanageDashboard />} />
+          <Route path="/orphanage-messages" element={<OrphanageMessages />} />
+          <Route path="/orphanage-reviews" element={<OrphanageReviews />} />
+          <Route path="/orphanage-settings" element={<OrphanageSettings />} />
+
+          {/* Redirects from old paths to new standardized paths */}
+          <Route path="/OrphanageDashboard" element={<Navigate to="/orphanage-dashboard" replace />} />
+          <Route path="/OrphanageMessages" element={<Navigate to="/orphanage-messages" replace />} />
+          <Route path="/OrphanageReviews" element={<Navigate to="/orphanage-reviews" replace />} />
+          <Route path="/OrphanageSettings" element={<Navigate to="/orphanage-settings" replace />} />
+
+          {/* Authentication and other routes */}
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/donate" element={<DonationForm />} />
@@ -331,6 +350,7 @@ function AppContent() {
           <Route path="/bible-verse" element={<BibleVerseScreen />} />
           <Route path="/api-test" element={<ApiTest />} />
           <Route path="/simple-login" element={<SimpleLogin />} />
+          <Route path="/simple-login-form" element={<SimpleLoginForm />} />
 
           {/* Admin Routes */}
           <Route path="/admin-login" element={<AdminLogin />} />
@@ -356,6 +376,8 @@ function AppContent() {
           onPaymentSuccess={handlePaymentSuccess}
           user={user}
         />
+
+
     </>
   );
 }

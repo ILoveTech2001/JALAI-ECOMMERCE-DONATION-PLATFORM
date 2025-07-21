@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,9 @@ public class OrphanageController {
 
     @Autowired
     private OrphanageRepository orphanageRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -275,6 +279,17 @@ public class OrphanageController {
             System.out.println("Orphanage name: " + orphanage.getName());
             System.out.println("Orphanage email: " + orphanage.getEmail());
             System.out.println("Orphanage location: " + orphanage.getLocation());
+
+            // Check if email already exists
+            if (orphanageRepository.existsByEmail(orphanage.getEmail())) {
+                return ResponseEntity.badRequest()
+                        .body(new MessageResponse("Error: Email is already in use!"));
+            }
+
+            // Encode password before saving
+            if (orphanage.getPassword() != null && !orphanage.getPassword().isEmpty()) {
+                orphanage.setPassword(passwordEncoder.encode(orphanage.getPassword()));
+            }
 
             // Set default values for new orphanages
             orphanage.setIsActive(false); // New orphanages start as inactive (pending approval)

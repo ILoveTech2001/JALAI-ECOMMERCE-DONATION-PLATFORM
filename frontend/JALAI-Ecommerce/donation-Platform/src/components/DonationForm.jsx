@@ -1,8 +1,10 @@
-import React from "react"
+import React, { useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Textarea } from "@/components/ui/textarea"
 import {
   User,
   Mail,
@@ -20,6 +22,9 @@ import {
   Truck,
   Clock,
   AlertCircle,
+  Star,
+  Hash,
+  FileText,
 } from "lucide-react"
 
 import { EnhancedLogo } from "./enhanced-logo"
@@ -30,9 +35,15 @@ import { DonationSummary } from "./donation-summary"
 import { SuccessMessage } from "./success-message"
 import { OrphanageInfoCard } from "./orphanage-info-card"
 import { useDonationForm } from "@/hooks/use-donation-form"
-import { orphanagesData, getOrphanagesByLocation, getOrphanageById } from "@/data/orphanages"
+import { useAuth } from "@/contexts/AuthContext"
+import apiService from "@/services/apiService"
 
 export default function DonationForm() {
+  const [searchParams] = useSearchParams()
+  const { user } = useAuth()
+  const [orphanage, setOrphanage] = React.useState(null)
+  const [loadingOrphanage, setLoadingOrphanage] = React.useState(true)
+
   const {
     isLoading,
     isSubmitted,
@@ -45,9 +56,46 @@ export default function DonationForm() {
     handleSubmit,
     resetForm,
     isStepValid,
+    initializeFormData,
   } = useDonationForm()
 
-  const stepTitles = ["Your Information", "Orphanage Selection", "Donation Details", "Review & Submit"]
+  const stepTitles = ["Your Information", "Donation Details", "Review & Submit"]
+
+  // Auto-fill user information and get orphanage from URL
+  useEffect(() => {
+    const orphanageId = searchParams.get('orphanage')
+
+    // Auto-fill user information if logged in
+    if (user && !formData.donorName) {
+      initializeFormData()
+    }
+
+    // Fetch orphanage details if ID is provided
+    if (orphanageId) {
+      fetchOrphanageDetails(orphanageId)
+    } else {
+      setLoadingOrphanage(false)
+    }
+  }, [user, searchParams, formData.donorName, initializeFormData])
+
+  const fetchOrphanageDetails = async (orphanageId) => {
+    try {
+      setLoadingOrphanage(true)
+      const response = await apiService.getOrphanage(orphanageId)
+      setOrphanage(response)
+      // Auto-fill orphanage information
+      initializeFormData({
+        orphanageId: response.id,
+        orphanageName: response.name,
+        orphanageContact: response.contact || response.email,
+        location: response.location,
+      })
+    } catch (error) {
+      console.error('Error fetching orphanage details:', error)
+    } finally {
+      setLoadingOrphanage(false)
+    }
+  }
 
   // If form is successfully submitted, show success message
   if (isSubmitted) {
@@ -62,12 +110,10 @@ export default function DonationForm() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <DonorInformationStep formData={formData} updateFormData={updateFormData} errors={errors} />
+        return <DonorInformationStep formData={formData} updateFormData={updateFormData} errors={errors} orphanage={orphanage} />
       case 2:
-        return <OrphanageSelectionStep formData={formData} updateFormData={updateFormData} errors={errors} />
-      case 3:
         return <DonationDetailsStep formData={formData} updateFormData={updateFormData} errors={errors} />
-      case 4:
+      case 3:
         return (
           <ReviewStep
             formData={formData}
@@ -75,6 +121,7 @@ export default function DonationForm() {
             handleSubmit={handleSubmit}
             isLoading={isLoading}
             errors={errors}
+            orphanage={orphanage}
           />
         )
       default:
@@ -181,10 +228,24 @@ export default function DonationForm() {
 }
 
 // Step Components
-function DonorInformationStep({ formData, updateFormData, errors }) {
+function DonorInformationStep({ formData, updateFormData, errors, orphanage }) {
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-green-800 mb-4">Tell us about yourself</h3>
+
+      {/* Show orphanage info if available */}
+      {orphanage && (
+        <div className="bg-blue-50/50 rounded-2xl p-4 mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Building className="h-5 w-5 text-blue-600" />
+            <h4 className="font-medium text-blue-800">Donating to: {orphanage.name}</h4>
+          </div>
+          <p className="text-sm text-blue-700">
+            <MapPin className="h-4 w-4 inline mr-1" />
+            {orphanage.location}
+          </p>
+        </div>
+      )}
 
       <FormField
         id="donorName"
@@ -250,106 +311,7 @@ function DonorInformationStep({ formData, updateFormData, errors }) {
   )
 }
 
-function OrphanageSelectionStep({ formData, updateFormData, errors }) {
-  const locations = [
-    { value: "yaounde", label: "Yaoundé, Centre Region" },
-    { value: "douala", label: "Douala, Littoral Region" },
-    { value: "bamenda", label: "Bamenda, Northwest Region" },
-    { value: "bafoussam", label: "Bafoussam, West Region" },
-    { value: "garoua", label: "Garoua, North Region" },
-    { value: "maroua", label: "Maroua, Far North Region" },
-    { value: "ngaoundere", label: "Ngaoundéré, Adamawa Region" },
-    { value: "bertoua", label: "Bertoua, East Region" },
-    { value: "buea", label: "Buea, Southwest Region" },
-    { value: "ebolowa", label: "Ebolowa, South Region" },
-    { value: "kumba", label: "Kumba, Southwest Region" },
-    { value: "limbe", label: "Limbe, Southwest Region" },
-  ]
 
-  // Get orphanages for selected location
-  const availableOrphanages = formData.location
-    ? getOrphanagesByLocation(formData.location).map((orphanage) => ({
-        value: orphanage.id,
-        label: orphanage.name,
-      }))
-    : []
-
-  // Get selected orphanage details
-  const selectedOrphanage = formData.orphanageId ? getOrphanageById(formData.orphanageId) : null
-
-  // Handle location change
-  const handleLocationChange = (location) => {
-    updateFormData("location", location)
-    // Clear orphanage selection when location changes
-    updateFormData("orphanageId", "")
-    updateFormData("orphanageName", "")
-  }
-
-  // Handle orphanage selection
-  const handleOrphanageChange = (orphanageId) => {
-    const orphanage = getOrphanageById(orphanageId)
-    updateFormData("orphanageId", orphanageId)
-    updateFormData("orphanageName", orphanage ? orphanage.name : "")
-    updateFormData("orphanageContact", orphanage ? orphanage.contact : "")
-  }
-
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-green-800 mb-4">Choose an orphanage to support</h3>
-
-      <div className="bg-blue-50/50 rounded-2xl p-4 mb-6">
-        <p className="text-sm text-blue-700 leading-relaxed">
-          <strong>📍 {orphanagesData.length} verified orphanages</strong> across Cameroon are waiting for your support.
-          Select a location first, then choose from the available orphanages in that area.
-        </p>
-      </div>
-
-      <SelectField
-        id="location"
-        label="Location"
-        placeholder="Select a region/city"
-        icon={MapPin}
-        required
-        options={locations}
-        value={formData.location}
-        onValueChange={handleLocationChange}
-        error={errors.location}
-      />
-
-      {formData.location && (
-        <SelectField
-          id="orphanageId"
-          label="Orphanage"
-          placeholder={`Select from ${availableOrphanages.length} orphanages in this area`}
-          icon={Building}
-          required
-          options={availableOrphanages}
-          value={formData.orphanageId}
-          onValueChange={handleOrphanageChange}
-          error={errors.orphanageName}
-        />
-      )}
-
-      {/* Display orphanage information card */}
-      {selectedOrphanage && (
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-green-700">Orphanage Information</Label>
-          <OrphanageInfoCard orphanage={selectedOrphanage} />
-        </div>
-      )}
-
-      {/* Show available orphanages count */}
-      {formData.location && !formData.orphanageId && (
-        <div className="bg-green-50/50 rounded-2xl p-4">
-          <p className="text-sm text-green-700">
-            <strong>{availableOrphanages.length} orphanages</strong> available in{" "}
-            {locations.find((l) => l.value === formData.location)?.label}
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function DonationDetailsStep({ formData, updateFormData, errors }) {
   const itemCategories = [
@@ -360,6 +322,7 @@ function DonationDetailsStep({ formData, updateFormData, errors }) {
     { value: "medical", label: "Medical Supplies" },
     { value: "electronics", label: "Electronics" },
     { value: "furniture", label: "Furniture" },
+    { value: "utensils", label: "Utensils & Kitchen Items" },
     { value: "other", label: "Other" },
   ]
 
@@ -423,7 +386,7 @@ function DonationDetailsStep({ formData, updateFormData, errors }) {
             <div className="flex items-center space-x-3">
               <Package className="h-6 w-6 text-green-500" />
               <div>
-                <h4 className="font-medium text-green-800">Item Donation</h4>
+                <h4 className="font-medium text-green-800">In-Kind Donation</h4>
                 <p className="text-sm text-green-600">Donate physical items</p>
               </div>
             </div>
@@ -434,18 +397,302 @@ function DonationDetailsStep({ formData, updateFormData, errors }) {
 
       {/* Monetary Donation Fields */}
       {formData.donationType === "monetary" && (
-        <FormField
-          id="monetaryAmount"
-          label="Donation Amount (CFA Francs)"
-          type="number"
-          placeholder="0"
-          icon={DollarSign}
-          required
-          value={formData.monetaryAmount}
-          onChange={(e) => updateFormData("monetaryAmount", e.target.value)}
-          error={errors.monetaryAmount}
-        />
+        <div className="space-y-4">
+          <FormField
+            id="monetaryAmount"
+            label="Donation Amount (CFA Francs)"
+            type="number"
+            placeholder="Enter amount (e.g., 50000)"
+            icon={DollarSign}
+            required
+            value={formData.monetaryAmount}
+            onChange={(e) => updateFormData("monetaryAmount", e.target.value)}
+            error={errors.monetaryAmount}
+          />
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-green-700">Message (Optional)</Label>
+            <Textarea
+              placeholder="Add a personal message with your donation..."
+              value={formData.message}
+              onChange={(e) => updateFormData("message", e.target.value)}
+              className="min-h-[100px] border-green-200 focus:border-green-400 focus:ring-green-400 rounded-xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* In-Kind Donation Fields */}
+      {formData.donationType === "items" && (
+        <div className="space-y-6">
+          <div className="bg-blue-50/50 rounded-2xl p-4">
+            <p className="text-sm text-blue-700 leading-relaxed">
+              <strong>📦 In-Kind Donations</strong> are physical items that directly benefit the children.
+              Please provide detailed information to help us coordinate the donation.
+            </p>
+          </div>
+
+          <SelectField
+            id="itemCategory"
+            label="Item Category"
+            placeholder="Select category"
+            icon={Package}
+            required
+            options={itemCategories}
+            value={formData.itemCategory}
+            onValueChange={(value) => updateFormData("itemCategory", value)}
+            error={errors.itemCategory}
+          />
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-green-700 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-green-500" />
+              Item Description *
+            </Label>
+            <Textarea
+              placeholder="Describe the items you're donating (e.g., 20 children's t-shirts, sizes 6-12, various colors)"
+              value={formData.itemDescription}
+              onChange={(e) => updateFormData("itemDescription", e.target.value)}
+              className="min-h-[100px] border-green-200 focus:border-green-400 focus:ring-green-400 rounded-xl"
+              required
+            />
+            {errors.itemDescription && <p className="text-xs text-red-500 mt-1">{errors.itemDescription}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              id="itemQuantity"
+              label="Quantity/Amount"
+              type="text"
+              placeholder="e.g., 20 pieces, 5 boxes"
+              icon={Hash}
+              value={formData.itemQuantity}
+              onChange={(e) => updateFormData("itemQuantity", e.target.value)}
+              error={errors.itemQuantity}
+            />
+
+            <SelectField
+              id="itemCondition"
+              label="Item Condition"
+              placeholder="Select condition"
+              icon={Star}
+              required
+              options={itemConditions}
+              value={formData.itemCondition}
+              onValueChange={(value) => updateFormData("itemCondition", value)}
+              error={errors.itemCondition}
+            />
+          </div>
+
+          <SelectField
+            id="urgencyLevel"
+            label="Urgency Level"
+            placeholder="How urgent is this donation?"
+            icon={Clock}
+            options={urgencyLevels}
+            value={formData.urgencyLevel}
+            onValueChange={(value) => updateFormData("urgencyLevel", value)}
+          />
+
+          <SelectField
+            id="deliveryMethod"
+            label="Delivery Method"
+            placeholder="How will you deliver the items?"
+            icon={Truck}
+            required
+            options={deliveryMethods}
+            value={formData.deliveryMethod}
+            onValueChange={(value) => updateFormData("deliveryMethod", value)}
+            error={errors.deliveryMethod}
+          />
+
+          {formData.deliveryMethod && (
+            <FormField
+              id="preferredDate"
+              label="Preferred Date"
+              type="date"
+              icon={Calendar}
+              value={formData.preferredDate}
+              onChange={(e) => updateFormData("preferredDate", e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+          )}
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-green-700">Additional Notes (Optional)</Label>
+            <Textarea
+              placeholder="Any special instructions, pickup details, or additional information..."
+              value={formData.message}
+              onChange={(e) => updateFormData("message", e.target.value)}
+              className="min-h-[80px] border-green-200 focus:border-green-400 focus:ring-green-400 rounded-xl"
+            />
+          </div>
+        </div>
       )}
     </div>
   )
 }
+
+function ReviewStep({ formData, updateFormData, handleSubmit, isLoading, errors, orphanage }) {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-green-800 mb-4">Review Your Donation</h3>
+
+      {/* Donation Summary */}
+      <div className="bg-green-50/50 rounded-2xl p-6 space-y-4">
+        <h4 className="font-semibold text-green-800 flex items-center gap-2">
+          <Heart className="h-5 w-5 text-green-500" />
+          Donation Summary
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-green-600">Donor:</span>
+            <p className="font-medium text-green-800">{formData.donorName}</p>
+          </div>
+          <div>
+            <span className="text-green-600">Email:</span>
+            <p className="font-medium text-green-800">{formData.donorEmail}</p>
+          </div>
+          <div>
+            <span className="text-green-600">Phone:</span>
+            <p className="font-medium text-green-800">{formData.donorPhone}</p>
+          </div>
+          <div>
+            <span className="text-green-600">Orphanage:</span>
+            <p className="font-medium text-green-800">{orphanage?.name || formData.orphanageName}</p>
+          </div>
+        </div>
+
+        <div className="border-t border-green-200/50 pt-4">
+          <span className="text-green-600">Donation Type:</span>
+          <p className="font-medium text-green-800 capitalize">{formData.donationType}</p>
+
+          {formData.donationType === "monetary" && (
+            <div className="mt-2">
+              <span className="text-green-600">Amount:</span>
+              <p className="font-bold text-green-800 text-lg">{parseInt(formData.monetaryAmount).toLocaleString()} CFA</p>
+            </div>
+          )}
+
+          {formData.donationType === "items" && (
+            <div className="mt-2 space-y-2">
+              <div>
+                <span className="text-green-600">Category:</span>
+                <p className="font-medium text-green-800">{itemCategories.find(cat => cat.value === formData.itemCategory)?.label}</p>
+              </div>
+              <div>
+                <span className="text-green-600">Description:</span>
+                <p className="font-medium text-green-800">{formData.itemDescription}</p>
+              </div>
+              {formData.itemQuantity && (
+                <div>
+                  <span className="text-green-600">Quantity:</span>
+                  <p className="font-medium text-green-800">{formData.itemQuantity}</p>
+                </div>
+              )}
+              {formData.itemCondition && (
+                <div>
+                  <span className="text-green-600">Condition:</span>
+                  <p className="font-medium text-green-800">{itemConditions.find(cond => cond.value === formData.itemCondition)?.label}</p>
+                </div>
+              )}
+              {formData.deliveryMethod && (
+                <div>
+                  <span className="text-green-600">Delivery:</span>
+                  <p className="font-medium text-green-800">{deliveryMethods.find(method => method.value === formData.deliveryMethod)?.label}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {formData.message && (
+            <div className="mt-4">
+              <span className="text-green-600">Message:</span>
+              <p className="font-medium text-green-800 italic">"{formData.message}"</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Terms and Conditions */}
+      <div className="space-y-4">
+        <div className="flex items-start space-x-3 p-4 bg-blue-50/50 rounded-2xl">
+          <input
+            type="checkbox"
+            id="agreeToTerms"
+            checked={formData.agreeToTerms}
+            onChange={(e) => updateFormData("agreeToTerms", e.target.checked)}
+            className="w-4 h-4 text-green-500 border-green-300 rounded focus:ring-green-200 focus:ring-2 mt-1"
+          />
+          <Label htmlFor="agreeToTerms" className="text-sm text-green-700 leading-relaxed">
+            I agree to the <span className="font-medium">Terms and Conditions</span> and confirm that the information provided is accurate.
+            I understand that JALAI will coordinate with the orphanage to ensure proper delivery of my donation.
+          </Label>
+        </div>
+        {errors.agreeToTerms && <p className="text-xs text-red-500 mt-1">{errors.agreeToTerms}</p>}
+
+        <div className="flex items-start space-x-3 p-4 bg-green-50/50 rounded-2xl">
+          <input
+            type="checkbox"
+            id="allowContact"
+            checked={formData.allowContact}
+            onChange={(e) => updateFormData("allowContact", e.target.checked)}
+            className="w-4 h-4 text-green-500 border-green-300 rounded focus:ring-green-200 focus:ring-2 mt-1"
+          />
+          <Label htmlFor="allowContact" className="text-sm text-green-700 leading-relaxed">
+            Allow the orphanage to contact me with updates about how my donation is being used (optional).
+          </Label>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div className="pt-4">
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading || !formData.agreeToTerms}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl text-lg font-medium"
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Processing Donation...
+            </>
+          ) : (
+            <>
+              <Heart className="h-5 w-5 mr-2" />
+              Submit Donation
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// Helper data for ReviewStep
+const itemCategories = [
+  { value: "clothing", label: "Clothing & Shoes" },
+  { value: "toys", label: "Toys & Games" },
+  { value: "books", label: "Books & Educational Materials" },
+  { value: "food", label: "Food & Nutrition" },
+  { value: "medical", label: "Medical Supplies" },
+  { value: "electronics", label: "Electronics" },
+  { value: "furniture", label: "Furniture" },
+  { value: "utensils", label: "Utensils & Kitchen Items" },
+  { value: "other", label: "Other" },
+]
+
+const itemConditions = [
+  { value: "new", label: "New" },
+  { value: "like-new", label: "Like New" },
+  { value: "good", label: "Good Condition" },
+  { value: "fair", label: "Fair Condition" },
+]
+
+const deliveryMethods = [
+  { value: "pickup", label: "I'll arrange pickup" },
+  { value: "delivery", label: "I'll deliver personally" },
+  { value: "shipping", label: "Ship via courier" },
+  { value: "jalai-pickup", label: "JALAI pickup service" },
+]
