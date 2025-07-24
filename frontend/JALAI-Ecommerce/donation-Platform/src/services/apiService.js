@@ -3,7 +3,7 @@ class ApiService {
   constructor() {
     // Use environment variable for production, fallback to localhost for development
     // Support both Vite (VITE_) and Create React App (REACT_APP_) environment variables
-    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com/api';
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
   }
 
