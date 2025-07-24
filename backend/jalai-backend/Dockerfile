@@ -1,4 +1,4 @@
-# Use OpenJDK 17 as base image
+# Use OpenJDK 17 as base image for Spring Boot
 FROM openjdk:17-jdk-slim
 
 # Set working directory
