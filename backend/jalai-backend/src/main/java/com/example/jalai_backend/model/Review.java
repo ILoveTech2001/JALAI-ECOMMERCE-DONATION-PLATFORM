@@ -25,7 +25,7 @@ public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "review_id", columnDefinition = "BINARY(16)")
+    @Column(name = "review_id")
     private UUID reviewId;
 
     @NotNull(message = "Client ID is required")

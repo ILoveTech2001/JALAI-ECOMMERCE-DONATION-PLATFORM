@@ -23,7 +23,7 @@ public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "payment_id", columnDefinition = "BINARY(16)")
+    @Column(name = "payment_id")
     private UUID paymentId;
 
     @NotNull(message = "Customer ID is required")

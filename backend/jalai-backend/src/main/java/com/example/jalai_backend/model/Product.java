@@ -43,7 +43,7 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "image_url", columnDefinition = "LONGTEXT")
+    @Column(name = "image_url", length = 1000)
     private String imageUrl;
 
     @Column(name = "is_donated")

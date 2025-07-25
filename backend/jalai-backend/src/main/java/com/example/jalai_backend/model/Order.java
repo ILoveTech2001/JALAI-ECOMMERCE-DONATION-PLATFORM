@@ -24,7 +24,7 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "order_id", columnDefinition = "BINARY(16)")
+    @Column(name = "order_id")
     private UUID orderId;
 
     @Enumerated(EnumType.STRING)

@@ -25,7 +25,6 @@ public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @NotBlank(message = "Name is required")
