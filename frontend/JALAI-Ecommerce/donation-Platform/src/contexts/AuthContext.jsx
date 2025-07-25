@@ -151,15 +151,25 @@ export const AuthProvider = ({ children }) => {
         // Validate user data before storing
         if (response.user.email && response.user.userType) {
           persistentLog('Setting user in context...', response.user);
+
+          // Set user state immediately
           setUser(response.user);
+
+          // Store in localStorage
           const userDataString = JSON.stringify(response.user);
           localStorage.setItem('userData', userDataString);
-          persistentLog('User set in context and localStorage', {
+
+          persistentLog('✅ User successfully set in context and localStorage', {
             userType: response.user.userType,
             email: response.user.email,
             dataLength: userDataString.length,
-            userSetInContext: true
+            userSetInContext: true,
+            timestamp: new Date().toISOString()
           });
+
+          // Force a small delay to ensure state is updated
+          await new Promise(resolve => setTimeout(resolve, 100));
+
         } else {
           persistentLog('ERROR: Invalid user data structure', response.user);
           throw new Error('Invalid user data received from server');

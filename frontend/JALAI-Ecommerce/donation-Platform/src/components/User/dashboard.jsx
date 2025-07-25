@@ -56,14 +56,19 @@ export default function Dashboard() {
   useEffect(() => {
     console.log('🔍 UserDashboard auth check:', { loading, user: !!user, userType: user?.userType });
 
-    // Only redirect if we're sure the user is not authenticated
-    // Give some time for the auth context to load the user
-    if (!loading && !user) {
-      console.log('🔴 UserDashboard: No user found, redirecting to login');
-      navigate('/login')
-    } else if (user) {
-      console.log('🟢 UserDashboard: User authenticated:', user.userType);
-    }
+    // Add a delay to prevent race condition with login navigation
+    const timeoutId = setTimeout(() => {
+      // Only redirect if we're sure the user is not authenticated
+      if (!loading && !user) {
+        console.log('🔴 UserDashboard: No user found after delay, redirecting to login');
+        navigate('/login')
+      } else if (user) {
+        console.log('🟢 UserDashboard: User authenticated:', user.userType);
+      }
+    }, 1000); // Wait 1 second for auth context to fully load
+
+    // Cleanup timeout if component unmounts or dependencies change
+    return () => clearTimeout(timeoutId);
   }, [loading, user, navigate])
   const [activeSection, setActiveSection] = useState("Dashboard")
   const [userName, setUserName] = useState("")

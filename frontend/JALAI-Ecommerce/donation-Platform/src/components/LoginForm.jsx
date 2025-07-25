@@ -62,6 +62,7 @@ export default function LoginForm() {
       setTimeout(() => {
         console.log('🟢 Navigating to dashboard...');
         console.log('🟢 Current URL before navigation:', window.location.href);
+        console.log('🟢 User data before navigation:', response.user);
 
         if (userType === 'ADMIN') {
           console.log('🟢 Navigating to /admin');
@@ -77,8 +78,9 @@ export default function LoginForm() {
         // Log URL after navigation attempt
         setTimeout(() => {
           console.log('🟢 Current URL after navigation:', window.location.href);
-        }, 100);
-      }, 500); // Wait 500ms for AuthContext to fully update
+          console.log('🟢 Navigation completed');
+        }, 200);
+      }, 1000); // Increased to 1000ms to ensure AuthContext is fully updated
 
     } catch (error) {
       console.error('Login failed:', error)

@@ -28,17 +28,19 @@ const SimpleLoginForm = () => {
       setEmail('');
       setPassword('');
 
-      // Navigate based on user type
-      if (userType === 'ADMIN') {
-        console.log('🟢 SIMPLE FORM: Redirecting to admin...');
-        navigate('/admin');
-      } else if (userType === 'ORPHANAGE') {
-        console.log('🟢 SIMPLE FORM: Redirecting to orphanage dashboard...');
-        navigate('/orphanage-dashboard');
-      } else {
-        console.log('🟢 SIMPLE FORM: Redirecting to user dashboard...');
-        navigate('/user-dashboard');
-      }
+      // Navigate based on user type with delay to prevent race condition
+      setTimeout(() => {
+        if (userType === 'ADMIN') {
+          console.log('🟢 SIMPLE FORM: Redirecting to admin...');
+          navigate('/admin', { replace: true });
+        } else if (userType === 'ORPHANAGE') {
+          console.log('🟢 SIMPLE FORM: Redirecting to orphanage dashboard...');
+          navigate('/orphanage-dashboard', { replace: true });
+        } else {
+          console.log('🟢 SIMPLE FORM: Redirecting to user dashboard...');
+          navigate('/user-dashboard', { replace: true });
+        }
+      }, 1000); // Wait 1 second for AuthContext to fully update
 
     } catch (err) {
       console.error('🔴 SIMPLE FORM: Login failed:', err);
