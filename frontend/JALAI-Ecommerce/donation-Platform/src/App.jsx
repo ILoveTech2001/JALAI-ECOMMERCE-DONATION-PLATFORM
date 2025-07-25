@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
+import keepAliveService from "./services/keepAliveService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
 import Home from "./pages/Home";
 import Clothing from "./pages/Clothing";
@@ -62,6 +63,22 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  // Initialize keep-alive service for backend
+  useEffect(() => {
+    // Only start keep-alive in production
+    if (import.meta.env.PROD) {
+      console.log('🚀 Starting backend keep-alive service...');
+      keepAliveService.start();
+
+      // Cleanup on unmount
+      return () => {
+        keepAliveService.stop();
+      };
+    } else {
+      console.log('🔧 Keep-alive service disabled in development');
+    }
+  }, []);
 
   // Dummy users data - replace with real backend integration later
   const dummyUsers = [
