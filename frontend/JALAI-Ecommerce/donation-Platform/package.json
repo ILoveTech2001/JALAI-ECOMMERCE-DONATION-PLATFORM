@@ -88,24 +88,12 @@
     "tailwindcss": "^4.1.11",
     "typescript": "^5.7.2",
     "vite": "^6.3.5",
-    "vitest": "^2.2.0"
+    "vitest": "^2.1.8"
   },
   "overrides": {
-    "@vitest/mocker": {
-      "vite": "$vite"
-    },
     "react-day-picker": {
       "react": "$react",
-      "react-dom": "$react-dom",
-      "date-fns": "$date-fns"
-    }
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
+      "react-dom": "$react-dom"
     }
   }
 }
