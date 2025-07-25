@@ -22,8 +22,8 @@ COPY src ./src
 # Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Expose port
-EXPOSE 8080
+# Expose port (Render will set PORT environment variable)
+EXPOSE 10000
 
 # Run the application
 CMD ["java", "-jar", "target/jalai-backend-0.0.1-SNAPSHOT.jar"]
