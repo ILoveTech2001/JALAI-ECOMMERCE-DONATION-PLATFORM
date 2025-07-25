@@ -15,6 +15,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+  base: './',
 })
 // This configuration sets up Vite for a React project, allowing for path aliasing
 // and ensuring compatibility with ESM modules. The `@` alias points to the `src` directory,
