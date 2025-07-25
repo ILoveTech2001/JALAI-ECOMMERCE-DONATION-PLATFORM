@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+        pre { background: #e9ecef; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Backend API Test</h1>
+    <p>Test the backend API endpoints to verify connectivity and responses.</p>
+    
+    <button onclick="testHealth()">Test Health Endpoint</button>
+    <button onclick="testLogin()">Test Login Endpoint</button>
+    <button onclick="testRegister()">Test Register Endpoint</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results">
+        <p>Click a button above to test the API endpoints.</p>
+    </div>
+
+    <script>
+        function clearResults() {
+            document.getElementById('results').innerHTML = '<p>Click a button above to test the API endpoints.</p>';
+        }
+
+        async function testHealth() {
+            updateResults('Testing health endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:8080/actuator/health');
+                const data = await response.text();
+                updateResults(`<h3 class="success">Health Response (${response.status}):</h3><pre>${data}</pre>`, 'success');
+            } catch (error) {
+                updateResults(`<h3 class="error">Health Error:</h3><pre>${error.message}</pre>`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            updateResults('Testing login endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                const data = await response.json();
+                updateResults(`<h3 class="success">Login Response (${response.status}):</h3><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+            } catch (error) {
+                updateResults(`<h3 class="error">Login Error:</h3><pre>${error.message}</pre>`, 'error');
+            }
+        }
+
+        async function testRegister() {
+            updateResults('Testing register endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register/client', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: 'Test User',
+                        email: 'testuser' + Date.now() + '@example.com',
+                        password: 'password123',
+                        phone: '+1234567890',
+                        location: 'Test City'
+                    })
+                });
+                const data = await response.json();
+                updateResults(`<h3 class="success">Register Response (${response.status}):</h3><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+            } catch (error) {
+                updateResults(`<h3 class="error">Register Error:</h3><pre>${error.message}</pre>`, 'error');
+            }
+        }
+
+        function updateResults(content, type) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = content;
+            resultsDiv.className = type;
+        }
+    </script>
+</body>
+</html>
