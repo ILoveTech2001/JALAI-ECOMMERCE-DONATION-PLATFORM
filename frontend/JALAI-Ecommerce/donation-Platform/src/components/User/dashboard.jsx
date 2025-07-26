@@ -212,7 +212,7 @@ export default function Dashboard() {
           } else {
             setDonations([])
           }
-        } catch (error) {
+        } catch {
           setDonations([])
         }
 
@@ -235,7 +235,7 @@ export default function Dashboard() {
           } else {
             setOrders([])
           }
-        } catch (error) {
+        } catch {
           setOrders([])
         }
 
