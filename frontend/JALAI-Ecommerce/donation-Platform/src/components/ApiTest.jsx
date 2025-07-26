@@ -8,7 +8,7 @@ const ApiTest = () => {
     setLoading(true);
     setResults('Testing health endpoint...');
     try {
-      const response = await fetch('http://localhost:8080/api/actuator/health');
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/actuator/health');
       const data = await response.text();
       setResults(`Health Response (${response.status}):\n${data}`);
     } catch (error) {
@@ -21,7 +21,7 @@ const ApiTest = () => {
     setLoading(true);
     setResults('Testing login endpoint...');
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const ApiTest = () => {
     setLoading(true);
     setResults('Testing register endpoint...');
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register/client', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/register/client', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

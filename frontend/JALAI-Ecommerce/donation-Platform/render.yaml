@@ -16,8 +16,8 @@ services:
       - key: CI
         value: false
       - key: VITE_API_URL
-        value: https://jalai-ecommerce-donation-platform-3.onrender.com/api
+        value: https://jalai-ecommerce-donation-platform-3.onrender.com
       - key: REACT_APP_API_URL
-        value: https://jalai-ecommerce-donation-platform-3.onrender.com/api
+        value: https://jalai-ecommerce-donation-platform-3.onrender.com
       - key: NODE_ENV
         value: production

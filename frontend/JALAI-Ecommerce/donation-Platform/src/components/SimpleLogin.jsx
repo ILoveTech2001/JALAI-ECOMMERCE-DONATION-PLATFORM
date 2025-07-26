@@ -14,7 +14,7 @@ const SimpleLogin = () => {
     try {
       console.log('Making direct API call to login...');
       
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ const SimpleLogin = () => {
     try {
       console.log('Making direct API call to login as admin...');
 
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ const SimpleLogin = () => {
     try {
       console.log('Making direct API call to login as sample client...');
 
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +239,7 @@ const SimpleLogin = () => {
     try {
       console.log('Creating admin user via API...');
 
-      const response = await fetch('http://localhost:8080/api/auth/create-admin', {
+      const response = await fetch('https://jalai-ecommerce-donation-platform-3.onrender.com/api/auth/create-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,8 @@ class ApiService {
   constructor() {
     // Use environment variable for production, fallback to localhost for development
     // Support both Vite (VITE_) and Create React App (REACT_APP_) environment variables
-    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com/api';
+    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com';
+    console.log('🔧 API Service initialized with baseURL:', this.baseURL);
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
   }
 
@@ -135,26 +136,43 @@ class ApiService {
 
   // Authentication methods
   async login(email, password) {
-    const response = await this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      console.log('🔧 Attempting login to:', `${this.baseURL}/auth/login`);
+      console.log('🔧 Login credentials:', { email, password: '***' });
 
-    console.log('API login response:', response); // Debug log
+      const response = await this.request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (response && response.accessToken) {
-      this.setToken(response.accessToken);
-      if (response.user) {
-        localStorage.setItem('userData', JSON.stringify(response.user));
+      console.log('🔧 API login response:', response); // Debug log
+      console.log('🔧 Response type:', typeof response);
+      console.log('🔧 Response keys:', response ? Object.keys(response) : 'null');
+
+      if (response && response.accessToken) {
+        console.log('🟢 Login successful - setting token');
+        this.setToken(response.accessToken);
+        if (response.user) {
+          localStorage.setItem('userData', JSON.stringify(response.user));
+        }
+        if (response.refreshToken) {
+          localStorage.setItem('refreshToken', response.refreshToken);
+        }
+      } else {
+        console.error('🔴 Login response missing accessToken:', response);
+        throw new Error('Login failed: No access token received');
       }
-      if (response.refreshToken) {
-        localStorage.setItem('refreshToken', response.refreshToken);
-      }
-    } else {
-      console.error('Login response missing accessToken:', response);
+
+      return response;
+    } catch (error) {
+      console.error('🔴 Login error:', error);
+      console.error('🔴 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      throw error;
     }
-
-    return response;
   }
 
   async register(userData, userType = 'client') {
