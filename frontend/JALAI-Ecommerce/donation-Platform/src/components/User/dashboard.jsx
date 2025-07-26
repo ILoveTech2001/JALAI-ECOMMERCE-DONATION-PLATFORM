@@ -1674,6 +1674,11 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <DebugAuthState />
+
+      {/* Emergency Mobile Notice */}
+      <div className="lg:hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-sm">
+        📱 Mobile view detected. Hamburger menu: {sidebarOpen ? 'OPEN' : 'CLOSED'}
+      </div>
       {/* Top Navigation Bar */}
       <nav className="bg-white shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1713,8 +1718,10 @@ export default function Dashboard() {
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className={`
+          w-64 bg-white shadow-lg flex flex-col
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out lg:transition-none flex flex-col
+          lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out lg:transition-none
+          ${sidebarOpen ? 'block' : 'hidden lg:flex'}
         `}>
           {/* Mobile close button */}
           <div className="lg:hidden flex justify-end p-4">
