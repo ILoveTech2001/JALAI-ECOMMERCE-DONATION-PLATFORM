@@ -20,6 +20,46 @@ class ApiService {
     localStorage.removeItem('refreshToken');
   }
 
+  // Public request method (no authentication required)
+  async publicRequest(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      console.log(`Making public API request to: ${url}`);
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Public API request failed: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      } else {
+        const textResponse = await response.text();
+        console.log(`Non-JSON response from ${url}:`, textResponse);
+        try {
+          return JSON.parse(textResponse);
+        } catch {
+          return { message: textResponse, rawResponse: textResponse };
+        }
+      }
+    } catch (error) {
+      console.error('Public API request failed:', error);
+      throw error;
+    }
+  }
+
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
 
@@ -70,9 +110,11 @@ class ApiService {
               return await retryResponse.json();
             }
           }
-          // If refresh failed, clear tokens and redirect to login
+          // If refresh failed, clear tokens but don't auto-redirect
+          console.log('🔴 Token refresh failed, clearing tokens');
           this.clearToken();
-          window.location.href = '/login';
+          // Don't auto-redirect - let the component handle it
+          throw new Error('Authentication failed. Please log in again.');
           return;
         }
 
@@ -266,11 +308,11 @@ class ApiService {
   }
 
   async getProduct(id) {
-    return this.request(`/products/${id}`);
+    return this.publicRequest(`/products/${id}`);
   }
 
   async searchProducts(keyword, page = 0, size = 10) {
-    return this.request(`/products/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`);
+    return this.publicRequest(`/products/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`);
   }
 
   async getProductsByCategory(categoryId, page = 0, size = 10) {
@@ -278,11 +320,11 @@ class ApiService {
   }
 
   async getApprovedProducts(page = 0, size = 10) {
-    return this.request(`/products/approved?page=${page}&size=${size}`);
+    return this.publicRequest(`/products/approved?page=${page}&size=${size}`);
   }
 
   async getApprovedProductsByCategory(categoryName, page = 0, size = 4) {
-    return this.request(`/products/approved/category/${encodeURIComponent(categoryName)}?page=${page}&size=${size}`);
+    return this.publicRequest(`/products/approved/category/${encodeURIComponent(categoryName)}?page=${page}&size=${size}`);
   }
 
   async createProduct(productData) {
