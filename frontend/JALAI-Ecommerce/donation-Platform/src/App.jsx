@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
@@ -25,9 +25,6 @@ import DonationForm from "./components/DonationForm";
 import Dashboard from "./components/Dashboard";
 import OrphanageDetails from "./components/OrphanageDetails";
 import BibleVerseScreen from "./components/BibleVerseScreen";
-import ApiTest from "./components/ApiTest";
-import SimpleLogin from "./components/SimpleLogin";
-import SimpleLoginForm from "./components/SimpleLoginForm";
 import LoginPromptModal from "./components/LoginPromptModal";
 import PaymentModal from "./components/PaymentModal";
 import AdminDashboard from "./components/Admin/AdminDashboard";
@@ -342,32 +339,24 @@ function AppContent() {
               />
             }
           />
+          {/* User Dashboard */}
           <Route path="/user-dashboard" element={<UserDashboard />} />
-          {/* Redirect from old path to new standardized path */}
-          <Route path="/userDashboard" element={<Navigate to="/user-dashboard" replace />} />
 
-          {/* Standardized orphanage routes */}
+          {/* Orphanage Routes */}
           <Route path="/orphanage-dashboard" element={<OrphanageDashboard />} />
           <Route path="/orphanage-messages" element={<OrphanageMessages />} />
           <Route path="/orphanage-reviews" element={<OrphanageReviews />} />
           <Route path="/orphanage-settings" element={<OrphanageSettings />} />
 
-          {/* Redirects from old paths to new standardized paths */}
-          <Route path="/OrphanageDashboard" element={<Navigate to="/orphanage-dashboard" replace />} />
-          <Route path="/OrphanageMessages" element={<Navigate to="/orphanage-messages" replace />} />
-          <Route path="/OrphanageReviews" element={<Navigate to="/orphanage-reviews" replace />} />
-          <Route path="/OrphanageSettings" element={<Navigate to="/orphanage-settings" replace />} />
-
-          {/* Authentication and other routes */}
+          {/* Authentication Routes */}
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
+
+          {/* Main Application Routes */}
           <Route path="/donate" element={<DonationForm />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/orphanage/:id" element={<OrphanageDetails />} />
           <Route path="/bible-verse" element={<BibleVerseScreen />} />
-          <Route path="/api-test" element={<ApiTest />} />
-          <Route path="/simple-login" element={<SimpleLogin />} />
-          <Route path="/simple-login-form" element={<SimpleLoginForm />} />
 
           {/* Admin Routes */}
           <Route path="/admin-login" element={<AdminLogin />} />
