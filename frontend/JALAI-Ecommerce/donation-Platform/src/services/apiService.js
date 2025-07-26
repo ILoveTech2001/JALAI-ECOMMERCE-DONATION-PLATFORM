@@ -22,8 +22,13 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
 
-    // Get the current token (either user or admin)
-    const currentToken = this.token || localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
+    // CRITICAL: Always get fresh token from localStorage
+    const currentToken = localStorage.getItem('accessToken') || localStorage.getItem('adminToken') || this.token;
+
+    // Update instance token if we found one in localStorage
+    if (currentToken && !this.token) {
+      this.token = currentToken;
+    }
 
     // Debug authentication for order creation
     if (endpoint.includes('orders/create-from-cart')) {

@@ -79,11 +79,25 @@ export default function Dashboard() {
 
     // Only redirect after a delay if no user and not loading
     const timeoutId = setTimeout(() => {
-      if (!loading && !user) {
+      // Check localStorage for user data as backup
+      const storedUserData = localStorage.getItem('userData');
+      const storedToken = localStorage.getItem('accessToken');
+
+      console.log('🔍 Final auth check:', {
+        loading,
+        user: !!user,
+        storedUserData: !!storedUserData,
+        storedToken: !!storedToken
+      });
+
+      if (!loading && !user && !storedUserData) {
         console.log('🔴 UserDashboard: No user found after delay, redirecting to login');
         navigate('/login', { replace: true });
+      } else if (storedUserData && !user) {
+        console.log('🟡 UserDashboard: Found stored user data but no user in context');
+        // Don't redirect, let AuthContext handle it
       }
-    }, 2000); // Increased to 2 seconds
+    }, 3000); // Increased to 3 seconds for more stability
 
     // Cleanup timeout if component unmounts or dependencies change
     return () => clearTimeout(timeoutId);
@@ -531,7 +545,7 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const refreshAllUserData = async () => {
+  const refreshAllUserData = useCallback(async () => {
     if (!user) return
 
     try {
@@ -582,7 +596,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error refreshing user data:', error)
     }
-  }
+  }, [user, refreshNotifications])
 
   // Auto-refresh notifications every 30 seconds
   useEffect(() => {

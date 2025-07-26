@@ -52,14 +52,17 @@ class KeepAliveService {
   async ping() {
     try {
       const startTime = Date.now();
-      
+
+      // Get auth token for authenticated ping
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
+
       // Try to ping a lightweight endpoint
       const response = await fetch(`${this.baseURL}/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
-        // Don't include credentials for keep-alive pings
       });
 
       const endTime = Date.now();
@@ -87,12 +90,14 @@ class KeepAliveService {
         }
       } catch (fallbackError) {
         console.log('🔴 Keep-alive ping failed:', fallbackError.message);
-        
+
         // If it's a network error, the backend might be sleeping
         if (fallbackError.message.includes('fetch')) {
           console.log('💤 Backend might be sleeping, will retry in next interval');
         }
       }
+    }
+  }
     }
   }
 
