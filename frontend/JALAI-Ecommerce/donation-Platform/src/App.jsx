@@ -1,41 +1,106 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
 import keepAliveService from "./services/keepAliveService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
-import Home from "./pages/Home";
-import Clothing from "./pages/Clothing";
-import Furniture from "./pages/Funitures";
-import Electronics from "./pages/Electronics";
-import Footwear from "./pages/Footwear";
-import Utensils from "./pages/Utensils";
-import OrphanageDashboard from "./pages/OphanageDashboard";
-import OrphanageMessages from "./pages/OrphanageMessages";
-import OrphanageReviews from "./pages/orphanagePages/OrphanageReviews";
-import OrphanageSettings from "./pages/orphanagePages/OrphanageSettings";
-import Cart from "./components/Cart";
-import UserDashboard from "./components/User/dashboard";
 
-// New consolidated components
-import LoginForm from "./components/LoginForm";
-import SignupForm from "./components/SignupForm";
-import DonationForm from "./components/DonationForm";
-import Dashboard from "./components/Dashboard";
-import OrphanageDetails from "./components/OrphanageDetails";
-import BibleVerseScreen from "./components/BibleVerseScreen";
-import ApiTest from "./components/ApiTest";
-import SimpleLogin from "./components/SimpleLogin";
-import SimpleLoginForm from "./components/SimpleLoginForm";
+// Lazy load all major components for better performance and routing
+const Home = lazy(() => import("./pages/Home"));
+const Clothing = lazy(() => import("./pages/Clothing"));
+const Furniture = lazy(() => import("./pages/Funitures"));
+const Electronics = lazy(() => import("./pages/Electronics"));
+const Footwear = lazy(() => import("./pages/Footwear"));
+const Utensils = lazy(() => import("./pages/Utensils"));
+const OrphanageDashboard = lazy(() => import("./pages/OphanageDashboard"));
+const OrphanageMessages = lazy(() => import("./pages/OrphanageMessages"));
+const OrphanageReviews = lazy(() => import("./pages/orphanagePages/OrphanageReviews"));
+const OrphanageSettings = lazy(() => import("./pages/orphanagePages/OrphanageSettings"));
+const Cart = lazy(() => import("./components/Cart"));
+const UserDashboard = lazy(() => {
+  console.log('🚀 Lazy loading UserDashboard...');
+  return import("./components/User/dashboard").then(module => {
+    console.log('✅ UserDashboard loaded successfully');
+    return module;
+  }).catch(error => {
+    console.error('❌ UserDashboard failed to load:', error);
+    throw error;
+  });
+});
+
+// Lazy load authentication and form components
+const LoginForm = lazy(() => import("./components/LoginForm"));
+const SignupForm = lazy(() => import("./components/SignupForm"));
+const DonationForm = lazy(() => import("./components/DonationForm"));
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const OrphanageDetails = lazy(() => import("./components/OrphanageDetails"));
+const BibleVerseScreen = lazy(() => import("./components/BibleVerseScreen"));
+const ApiTest = lazy(() => import("./components/ApiTest"));
+const SimpleLogin = lazy(() => import("./components/SimpleLogin"));
+const SimpleLoginForm = lazy(() => import("./components/SimpleLoginForm"));
+
+// Keep these as regular imports since they're used in modals
 import LoginPromptModal from "./components/LoginPromptModal";
 import PaymentModal from "./components/PaymentModal";
 
-// Admin Dashboard
-import AdminDashboard from "./components/Admin/AdminDashboard";
-import AdminLogin from "./components/Admin/AdminLogin";
+// Lazy load admin components
+const AdminDashboard = lazy(() => import("./components/Admin/AdminDashboard"));
+const AdminLogin = lazy(() => import("./components/Admin/AdminLogin"));
 
 
 import "./assets/globals.css"; // Import global styles
+
+// Loading component for lazy-loaded routes
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto mb-4"></div>
+      <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading JALAI...</h2>
+      <p className="text-gray-500">Please wait while we prepare your experience</p>
+      <div className="mt-4 text-xs text-gray-400">
+        🚀 Lazy Loading Active - Better Performance
+      </div>
+    </div>
+  </div>
+);
+
+// Error boundary for lazy loading failures
+class LazyLoadErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Lazy loading error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center p-8">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Error</h2>
+            <p className="text-gray-500 mb-4">Something went wrong while loading this page.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Main App Content Component that uses AuthContext
 function AppContent() {
@@ -253,7 +318,9 @@ function AppContent() {
         user={user}
       />
 
-      <Routes>
+      <LazyLoadErrorBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
           <Route
             path="/"
             element={
@@ -372,6 +439,8 @@ function AppContent() {
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
+        </Suspense>
+      </LazyLoadErrorBoundary>
 
         {/* Login Prompt Modal */}
         <LoginPromptModal
