@@ -1,9 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "npm ci --legacy-peer-deps && CI=false npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "npm ci --legacy-peer-deps",
   "framework": "vite",
+  "env": {
+    "NODE_VERSION": "18.x"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
