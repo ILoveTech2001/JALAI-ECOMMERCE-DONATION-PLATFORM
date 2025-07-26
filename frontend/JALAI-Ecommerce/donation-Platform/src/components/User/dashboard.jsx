@@ -54,18 +54,36 @@ export default function Dashboard() {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    console.log('🔍 UserDashboard auth check:', { loading, user: !!user, userType: user?.userType });
+    console.log('🔍 UserDashboard MOUNTED - auth check:', {
+      loading,
+      user: !!user,
+      userType: user?.userType,
+      userEmail: user?.email,
+      timestamp: new Date().toISOString()
+    });
 
-    // Add a delay to prevent race condition with login navigation
+    // CRITICAL: Don't redirect if we're still loading or if user exists
+    if (loading) {
+      console.log('🟡 UserDashboard: Still loading, waiting...');
+      return;
+    }
+
+    if (user) {
+      console.log('🟢 UserDashboard: User authenticated successfully:', {
+        userType: user.userType,
+        email: user.email,
+        name: user.name
+      });
+      return;
+    }
+
+    // Only redirect after a delay if no user and not loading
     const timeoutId = setTimeout(() => {
-      // Only redirect if we're sure the user is not authenticated
       if (!loading && !user) {
         console.log('🔴 UserDashboard: No user found after delay, redirecting to login');
-        navigate('/login')
-      } else if (user) {
-        console.log('🟢 UserDashboard: User authenticated:', user.userType);
+        navigate('/login', { replace: true });
       }
-    }, 1000); // Wait 1 second for auth context to fully load
+    }, 2000); // Increased to 2 seconds
 
     // Cleanup timeout if component unmounts or dependencies change
     return () => clearTimeout(timeoutId);
@@ -1580,12 +1598,26 @@ export default function Dashboard() {
     }
   }
 
+  // Debug component to show auth state
+  const DebugAuthState = () => (
+    <div className="fixed top-0 right-0 bg-black text-white p-4 text-xs z-50 max-w-xs">
+      <div>Loading: {loading ? 'true' : 'false'}</div>
+      <div>User: {user ? 'exists' : 'null'}</div>
+      <div>UserType: {user?.userType || 'none'}</div>
+      <div>Email: {user?.email || 'none'}</div>
+      <div>Time: {new Date().toLocaleTimeString()}</div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <DebugAuthState />
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading your dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Auth loading: {loading ? 'true' : 'false'}</p>
+          <p className="text-sm text-gray-500">User: {user ? 'exists' : 'null'}</p>
         </div>
       </div>
     )
@@ -1604,6 +1636,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <DebugAuthState />
       {/* Top Navigation Bar */}
       <nav className="bg-white shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

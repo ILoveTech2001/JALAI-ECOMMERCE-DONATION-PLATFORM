@@ -60,27 +60,36 @@ export default function LoginForm() {
 
       // Give AuthContext a moment to fully set the user state before navigating
       setTimeout(() => {
-        console.log('🟢 Navigating to dashboard...');
+        console.log('🟢 CRITICAL: Starting navigation process...');
         console.log('🟢 Current URL before navigation:', window.location.href);
         console.log('🟢 User data before navigation:', response.user);
+        console.log('🟢 UserType determined:', userType);
 
+        // Force a page reload after navigation to ensure clean state
         if (userType === 'ADMIN') {
           console.log('🟢 Navigating to /admin');
-          navigate('/admin', { replace: true })
+          window.location.href = '/admin';
         } else if (userType === 'ORPHANAGE') {
           console.log('🟢 Navigating to /orphanage-dashboard');
-          navigate('/orphanage-dashboard', { replace: true })
+          window.location.href = '/orphanage-dashboard';
         } else {
-          console.log('🟢 Navigating to /user-dashboard');
-          navigate('/user-dashboard', { replace: true })
+          console.log('🟢 CRITICAL: Navigating to /user-dashboard');
+          console.log('🟢 Using window.location.href for hard navigation');
+          window.location.href = '/user-dashboard';
         }
 
-        // Log URL after navigation attempt
+        // Fallback with React Router if window.location doesn't work
         setTimeout(() => {
-          console.log('🟢 Current URL after navigation:', window.location.href);
-          console.log('🟢 Navigation completed');
-        }, 200);
-      }, 1000); // Increased to 1000ms to ensure AuthContext is fully updated
+          console.log('🟡 Fallback: Using React Router navigation');
+          if (userType === 'ADMIN') {
+            navigate('/admin', { replace: true });
+          } else if (userType === 'ORPHANAGE') {
+            navigate('/orphanage-dashboard', { replace: true });
+          } else {
+            navigate('/user-dashboard', { replace: true });
+          }
+        }, 500);
+      }, 1500); // Increased to 1500ms to ensure AuthContext is fully updated
 
     } catch (error) {
       console.error('Login failed:', error)
