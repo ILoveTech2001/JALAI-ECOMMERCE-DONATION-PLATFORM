@@ -66,18 +66,17 @@ function AppContent() {
 
   // Initialize keep-alive service for backend
   useEffect(() => {
-    // Only start keep-alive in production
-    if (import.meta.env.PROD) {
-      console.log('🚀 Starting backend keep-alive service...');
-      keepAliveService.start();
+    // TEMPORARILY DISABLED due to backend database issues
+    console.log('🔧 Keep-alive service temporarily disabled due to backend database issues');
 
-      // Cleanup on unmount
-      return () => {
-        keepAliveService.stop();
-      };
-    } else {
-      console.log('🔧 Keep-alive service disabled in development');
-    }
+    // TODO: Re-enable once backend database is fixed
+    // if (import.meta.env.PROD) {
+    //   console.log('🚀 Starting backend keep-alive service...');
+    //   keepAliveService.start();
+    //   return () => {
+    //     keepAliveService.stop();
+    //   };
+    // }
   }, []);
 
   // Dummy users data - replace with real backend integration later

@@ -53,48 +53,62 @@ class KeepAliveService {
     try {
       const startTime = Date.now();
 
-      // Get auth token for authenticated ping
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
+      // Try multiple endpoints in order of preference
+      const endpoints = [
+        { url: `${this.baseURL}`, auth: false, name: 'root' },
+        { url: `${this.baseURL}/public/health`, auth: false, name: 'public health' },
+        { url: `${this.baseURL}/actuator/health`, auth: false, name: 'actuator health' },
+      ];
 
-      // Try to ping a lightweight endpoint
-      const response = await fetch(`${this.baseURL}/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
-      });
+      let success = false;
 
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
+      for (const endpoint of endpoints) {
+        try {
+          const token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
 
-      if (response.ok) {
-        console.log(`🟢 Backend keep-alive ping successful (${responseTime}ms)`);
-      } else {
-        console.log(`🟡 Backend responded but with status: ${response.status}`);
+          const response = await fetch(endpoint.url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(endpoint.auth && token && { 'Authorization': `Bearer ${token}` }),
+            },
+          });
+
+          const endTime = Date.now();
+          const responseTime = endTime - startTime;
+
+          if (response.ok) {
+            console.log(`🟢 Backend keep-alive ping successful via ${endpoint.name} (${responseTime}ms)`);
+            success = true;
+            break;
+          } else if (response.status === 401) {
+            console.log(`🟡 ${endpoint.name} requires auth (401) - backend is awake but endpoint protected`);
+            success = true; // 401 means backend is running, just protected
+            break;
+          } else if (response.status === 404) {
+            console.log(`🟡 ${endpoint.name} not found (404) - trying next endpoint`);
+            continue;
+          } else {
+            console.log(`🟡 ${endpoint.name} responded with status: ${response.status}`);
+            success = true; // Any response means backend is awake
+            break;
+          }
+        } catch (endpointError) {
+          console.log(`🟡 ${endpoint.name} failed: ${endpointError.message}`);
+          continue;
+        }
       }
-    } catch (error) {
-      // Try alternative endpoint if /health doesn't exist
-      try {
-        const response = await fetch(`${this.baseURL}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (response.ok) {
-          console.log('🟢 Backend keep-alive ping successful (fallback endpoint)');
-        } else {
-          console.log(`🟡 Backend responded to fallback with status: ${response.status}`);
-        }
-      } catch (fallbackError) {
-        console.log('🔴 Keep-alive ping failed:', fallbackError.message);
 
-        // If it's a network error, the backend might be sleeping
-        if (fallbackError.message.includes('fetch')) {
-          console.log('💤 Backend might be sleeping, will retry in next interval');
-        }
+      if (!success) {
+        console.log('🔴 All keep-alive endpoints failed - backend might be sleeping');
+      }
+
+    } catch (error) {
+      console.log('🔴 Keep-alive ping failed:', error.message);
+
+      // If it's a network error, the backend might be sleeping
+      if (error.message.includes('fetch')) {
+        console.log('💤 Backend might be sleeping, will retry in next interval');
       }
     }
   }
