@@ -56,6 +56,9 @@ export default function Dashboard() {
   // Mobile sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Force re-render state
+  const [forceRender, setForceRender] = useState(0)
+
   // Redirect to login if not authenticated
   useEffect(() => {
     console.log('🔍 UserDashboard MOUNTED - auth check:', {
@@ -107,6 +110,39 @@ export default function Dashboard() {
     return () => clearTimeout(timeoutId);
   }, [loading, user, navigate])
   const [activeSection, setActiveSection] = useState("Dashboard")
+
+  // Enhanced setActiveSection with forced re-render
+  const handleSectionChange = useCallback((section) => {
+    console.log('🔄 CRITICAL: Changing section from', activeSection, 'to', section);
+
+    // Update URL hash for backup navigation
+    window.location.hash = section.toLowerCase().replace(/\s+/g, '-');
+
+    setActiveSection(section);
+    setForceRender(prev => prev + 1); // Force re-render
+
+    // Additional debugging
+    setTimeout(() => {
+      console.log('🔍 CRITICAL: Section change completed. Current activeSection:', section);
+      console.log('🔍 CRITICAL: Force render count:', forceRender + 1);
+      console.log('🔍 CRITICAL: URL hash:', window.location.hash);
+    }, 100);
+  }, [activeSection, forceRender]);
+
+  // Listen for hash changes (backup navigation)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'sell-item') {
+        console.log('🔄 BACKUP: Hash navigation to Sell Item');
+        setActiveSection("Sell Item");
+        setForceRender(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [userName, setUserName] = useState("")
   const [userStats, setUserStats] = useState({
     totalSpent: 0,
@@ -1311,8 +1347,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               onClick={() => {
-                console.log('🔍 Quick Action: Sell an Item clicked');
-                setActiveSection("Sell Item");
+                console.log('🔍 CRITICAL: Quick Action - Sell an Item clicked');
+                handleSectionChange("Sell Item");
               }}
               className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
@@ -1639,9 +1675,16 @@ export default function Dashboard() {
       <div>Email: {user?.email || 'none'}</div>
       <div>Active Section: {activeSection}</div>
       <div>Sidebar Open: {sidebarOpen ? 'true' : 'false'}</div>
+      <div>Render Count: {forceRender}</div>
       <div>Time: {new Date().toLocaleTimeString()}</div>
+      <button
+        onClick={() => handleSectionChange("Sell Item")}
+        className="bg-red-500 text-white px-2 py-1 mt-2 text-xs rounded"
+      >
+        🚨 Force Sell Item
+      </button>
       <div style={{fontSize: '10px', marginTop: '8px', color: '#00ff00'}}>
-        🔄 FORCE DEPLOY v2.0
+        🔄 NAVIGATION FIX v3.0
       </div>
     </div>
   );
@@ -1746,8 +1789,8 @@ export default function Dashboard() {
                   <li key={item.label}>
                     <button
                       onClick={() => {
-                        console.log('🔍 Sidebar menu clicked:', item.label);
-                        setActiveSection(item.label);
+                        console.log('🔍 CRITICAL: Sidebar menu clicked:', item.label);
+                        handleSectionChange(item.label);
                         setSidebarOpen(false); // Close mobile menu after selection
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
@@ -1772,7 +1815,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-4 lg:p-6 bg-gray-50 lg:ml-0">
+        <div className="flex-1 p-4 lg:p-6 bg-gray-50 lg:ml-0" key={`content-${activeSection}-${forceRender}`}>
           {renderContent()}
         </div>
       </div>
