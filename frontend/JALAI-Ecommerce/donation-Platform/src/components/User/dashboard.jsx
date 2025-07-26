@@ -111,12 +111,12 @@ export default function Dashboard() {
   }, [loading, user, navigate])
   const [activeSection, setActiveSection] = useState("Dashboard")
 
-  // Enhanced setActiveSection with forced re-render
+  // Enhanced setActiveSection with forced re-render (NO HASH NAVIGATION)
   const handleSectionChange = useCallback((section) => {
     console.log('🔄 CRITICAL: Changing section from', activeSection, 'to', section);
 
-    // Update URL hash for backup navigation
-    window.location.hash = section.toLowerCase().replace(/\s+/g, '-');
+    // REMOVED: Hash navigation (was causing page reload)
+    // window.location.hash = section.toLowerCase().replace(/\s+/g, '-');
 
     setActiveSection(section);
     setForceRender(prev => prev + 1); // Force re-render
@@ -125,24 +125,9 @@ export default function Dashboard() {
     setTimeout(() => {
       console.log('🔍 CRITICAL: Section change completed. Current activeSection:', section);
       console.log('🔍 CRITICAL: Force render count:', forceRender + 1);
-      console.log('🔍 CRITICAL: URL hash:', window.location.hash);
+      console.log('🔍 CRITICAL: Active section is now:', section);
     }, 100);
   }, [activeSection, forceRender]);
-
-  // Listen for hash changes (backup navigation)
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'sell-item') {
-        console.log('🔄 BACKUP: Hash navigation to Sell Item');
-        setActiveSection("Sell Item");
-        setForceRender(prev => prev + 1);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
   const [userName, setUserName] = useState("")
   const [userStats, setUserStats] = useState({
     totalSpent: 0,
@@ -1346,8 +1331,11 @@ export default function Dashboard() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('🔍 CRITICAL: Quick Action - Sell an Item clicked');
+                console.log('🔍 CRITICAL: Current activeSection before change:', activeSection);
                 handleSectionChange("Sell Item");
               }}
               className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
@@ -1633,14 +1621,21 @@ export default function Dashboard() {
   )
 
   const renderContent = () => {
-    console.log('🔍 renderContent called with activeSection:', activeSection);
+    console.log('🔍 CRITICAL renderContent called with activeSection:', activeSection);
+    console.log('🔍 CRITICAL Current timestamp:', new Date().toISOString());
+
+    // Immediate verification
+    if (activeSection === "Sell Item") {
+      console.log('✅ CRITICAL: Confirmed rendering Sell Item section');
+      console.log('✅ CRITICAL: renderSellItem function exists:', typeof renderSellItem);
+    }
 
     switch (activeSection) {
       case "Dashboard":
         console.log('🔍 Rendering Dashboard');
         return renderDashboard()
       case "Sell Item":
-        console.log('🔍 Rendering Sell Item');
+        console.log('✅ CRITICAL: RENDERING SELL ITEM NOW');
         return renderSellItem()
       case "My Cart":
         console.log('🔍 Rendering My Cart');
@@ -1678,13 +1673,18 @@ export default function Dashboard() {
       <div>Render Count: {forceRender}</div>
       <div>Time: {new Date().toLocaleTimeString()}</div>
       <button
-        onClick={() => handleSectionChange("Sell Item")}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('🚨 EMERGENCY: Force Sell Item clicked');
+          handleSectionChange("Sell Item");
+        }}
         className="bg-red-500 text-white px-2 py-1 mt-2 text-xs rounded"
       >
         🚨 Force Sell Item
       </button>
       <div style={{fontSize: '10px', marginTop: '8px', color: '#00ff00'}}>
-        🔄 NAVIGATION FIX v3.0
+        🔄 NO HASH NAV v4.0
       </div>
     </div>
   );
