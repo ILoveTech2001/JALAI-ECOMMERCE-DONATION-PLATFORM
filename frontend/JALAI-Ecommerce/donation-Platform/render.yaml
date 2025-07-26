@@ -2,7 +2,7 @@ services:
   - type: web
     name: jalai-frontend
     env: static
-    buildCommand: cd frontend/JALAI-Ecommerce/donation-Platform && npm install --force --legacy-peer-deps && npm run build
+    buildCommand: cd frontend/JALAI-Ecommerce/donation-Platform && npm install --include=dev --force --legacy-peer-deps && npm run build
     staticPublishPath: frontend/JALAI-Ecommerce/donation-Platform/dist
     routes:
       - type: rewrite
