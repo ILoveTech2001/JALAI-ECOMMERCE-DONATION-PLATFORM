@@ -8,7 +8,7 @@ class KeepAliveService {
     this.intervalId = null;
     this.isRunning = false;
     this.pingInterval = 14 * 60 * 1000; // 14 minutes (before 15-minute sleep)
-    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com/api';
+    this.baseURL = import.meta.env.VITE_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com/api';
   }
 
   /**

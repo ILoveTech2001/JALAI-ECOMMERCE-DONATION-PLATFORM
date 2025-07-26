@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback, Suspense, lazy } from "react"
+import { useState, useRef, useEffect, useCallback, Suspense } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import apiService from "../../services/apiService"

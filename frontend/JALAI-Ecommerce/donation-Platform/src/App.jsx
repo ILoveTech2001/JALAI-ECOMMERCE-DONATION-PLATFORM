@@ -2,7 +2,6 @@ import React, { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
-import keepAliveService from "./services/keepAliveService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
 
 // Lazy load all major components for better performance and routing
