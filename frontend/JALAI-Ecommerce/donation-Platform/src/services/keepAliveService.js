@@ -112,8 +112,6 @@ class KeepAliveService {
       }
     }
   }
-    }
-  }
 
   /**
    * Get service status
