@@ -13,7 +13,7 @@ npm install --force --legacy-peer-deps
 
 # Build the application
 echo "🔨 Building application..."
-CI=false npm run build
+CI=false npx vite build
 
 # Verify build
 echo "✅ Build completed!"
