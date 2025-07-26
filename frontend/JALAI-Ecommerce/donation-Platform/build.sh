@@ -7,9 +7,9 @@ echo "🚀 Starting JALAI Frontend Build..."
 echo "📦 Setting Node.js version..."
 export NODE_VERSION=18.20.0
 
-# Install dependencies with legacy peer deps
+# Install dependencies with force and legacy peer deps
 echo "📦 Installing dependencies..."
-npm ci --legacy-peer-deps
+npm install --force --legacy-peer-deps
 
 # Build the application
 echo "🔨 Building application..."
