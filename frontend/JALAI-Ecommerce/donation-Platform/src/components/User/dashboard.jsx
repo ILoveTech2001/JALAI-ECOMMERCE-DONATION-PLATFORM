@@ -1630,14 +1630,19 @@ export default function Dashboard() {
     }
   }
 
-  // Debug component to show auth state
+  // Debug component to show auth state and active section
   const DebugAuthState = () => (
     <div className="fixed top-0 right-0 bg-black text-white p-4 text-xs z-50 max-w-xs">
       <div>Loading: {loading ? 'true' : 'false'}</div>
       <div>User: {user ? 'exists' : 'null'}</div>
       <div>UserType: {user?.userType || 'none'}</div>
       <div>Email: {user?.email || 'none'}</div>
+      <div>Active Section: {activeSection}</div>
+      <div>Sidebar Open: {sidebarOpen ? 'true' : 'false'}</div>
       <div>Time: {new Date().toLocaleTimeString()}</div>
+      <div style={{fontSize: '10px', marginTop: '8px', color: '#00ff00'}}>
+        🔄 FORCE DEPLOY v2.0
+      </div>
     </div>
   );
 
