@@ -111,23 +111,11 @@ export default function Dashboard() {
   }, [loading, user, navigate])
   const [activeSection, setActiveSection] = useState("Dashboard")
 
-  // Enhanced setActiveSection with forced re-render (NO HASH NAVIGATION)
+  // Enhanced setActiveSection with forced re-render
   const handleSectionChange = useCallback((section) => {
-    console.log('🔄 CRITICAL: Changing section from', activeSection, 'to', section);
-
-    // REMOVED: Hash navigation (was causing page reload)
-    // window.location.hash = section.toLowerCase().replace(/\s+/g, '-');
-
     setActiveSection(section);
     setForceRender(prev => prev + 1); // Force re-render
-
-    // Additional debugging
-    setTimeout(() => {
-      console.log('🔍 CRITICAL: Section change completed. Current activeSection:', section);
-      console.log('🔍 CRITICAL: Force render count:', forceRender + 1);
-      console.log('🔍 CRITICAL: Active section is now:', section);
-    }, 100);
-  }, [activeSection, forceRender]);
+  }, []);
   const [userName, setUserName] = useState("")
   const [userStats, setUserStats] = useState({
     totalSpent: 0,
@@ -1334,8 +1322,6 @@ export default function Dashboard() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔍 CRITICAL: Quick Action - Sell an Item clicked');
-                console.log('🔍 CRITICAL: Current activeSection before change:', activeSection);
                 handleSectionChange("Sell Item");
               }}
               className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
@@ -1621,73 +1607,34 @@ export default function Dashboard() {
   )
 
   const renderContent = () => {
-    console.log('🔍 CRITICAL renderContent called with activeSection:', activeSection);
-    console.log('🔍 CRITICAL Current timestamp:', new Date().toISOString());
-
-    // Immediate verification
+    // Minimal logging for debugging
     if (activeSection === "Sell Item") {
-      console.log('✅ CRITICAL: Confirmed rendering Sell Item section');
-      console.log('✅ CRITICAL: renderSellItem function exists:', typeof renderSellItem);
+      console.log('✅ Rendering Sell Item section');
     }
 
     switch (activeSection) {
       case "Dashboard":
-        console.log('🔍 Rendering Dashboard');
         return renderDashboard()
       case "Sell Item":
-        console.log('✅ CRITICAL: RENDERING SELL ITEM NOW');
         return renderSellItem()
       case "My Cart":
-        console.log('🔍 Rendering My Cart');
         return renderCart()
       case "Donations":
-        console.log('🔍 Rendering Donations');
         return renderDonations()
       case "Orders":
-        console.log('🔍 Rendering Orders');
         return renderOrders()
       case "My Purchases":
-        console.log('🔍 Rendering My Purchases');
         return renderMyPurchases()
       case "Notifications":
-        console.log('🔍 Rendering Notifications');
         return renderNotifications()
       case "Settings":
-        console.log('🔍 Rendering Settings');
         return renderSettings()
       default:
-        console.log('🔍 Rendering Default (Dashboard)');
         return renderDashboard()
     }
   }
 
-  // Debug component to show auth state and active section
-  const DebugAuthState = () => (
-    <div className="fixed top-0 right-0 bg-black text-white p-4 text-xs z-50 max-w-xs">
-      <div>Loading: {loading ? 'true' : 'false'}</div>
-      <div>User: {user ? 'exists' : 'null'}</div>
-      <div>UserType: {user?.userType || 'none'}</div>
-      <div>Email: {user?.email || 'none'}</div>
-      <div>Active Section: {activeSection}</div>
-      <div>Sidebar Open: {sidebarOpen ? 'true' : 'false'}</div>
-      <div>Render Count: {forceRender}</div>
-      <div>Time: {new Date().toLocaleTimeString()}</div>
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('🚨 EMERGENCY: Force Sell Item clicked');
-          handleSectionChange("Sell Item");
-        }}
-        className="bg-red-500 text-white px-2 py-1 mt-2 text-xs rounded"
-      >
-        🚨 Force Sell Item
-      </button>
-      <div style={{fontSize: '10px', marginTop: '8px', color: '#00ff00'}}>
-        🔄 NO HASH NAV v4.0
-      </div>
-    </div>
-  );
+  // Debug component removed for clean UI
 
   if (loading) {
     return (
@@ -1716,12 +1663,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <DebugAuthState />
-
-      {/* Emergency Mobile Notice */}
-      <div className="lg:hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-sm">
-        📱 Mobile view detected. Hamburger menu: {sidebarOpen ? 'OPEN' : 'CLOSED'}
-      </div>
       {/* Top Navigation Bar */}
       <nav className="bg-white shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1789,7 +1730,6 @@ export default function Dashboard() {
                   <li key={item.label}>
                     <button
                       onClick={() => {
-                        console.log('🔍 CRITICAL: Sidebar menu clicked:', item.label);
                         handleSectionChange(item.label);
                         setSidebarOpen(false); // Close mobile menu after selection
                       }}
