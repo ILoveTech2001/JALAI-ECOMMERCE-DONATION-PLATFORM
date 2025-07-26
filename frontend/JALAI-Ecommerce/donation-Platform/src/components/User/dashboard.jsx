@@ -45,12 +45,16 @@ import {
   XCircle,
   Clock,
   RefreshCw,
+  Menu,
 } from "lucide-react"
 
 export default function Dashboard() {
   const { user, loading, error } = useAuth()
   const navigate = useNavigate()
   // Removed local loading and error state, use AuthContext
+
+  // Mobile sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -1306,7 +1310,10 @@ export default function Dashboard() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
-              onClick={() => setActiveSection("Sell Item")}
+              onClick={() => {
+                console.log('🔍 Quick Action: Sell an Item clicked');
+                setActiveSection("Sell Item");
+              }}
               className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               <ShoppingBag className="w-6 h-6 mr-2" />
@@ -1590,24 +1597,35 @@ export default function Dashboard() {
   )
 
   const renderContent = () => {
+    console.log('🔍 renderContent called with activeSection:', activeSection);
+
     switch (activeSection) {
       case "Dashboard":
+        console.log('🔍 Rendering Dashboard');
         return renderDashboard()
       case "Sell Item":
+        console.log('🔍 Rendering Sell Item');
         return renderSellItem()
       case "My Cart":
+        console.log('🔍 Rendering My Cart');
         return renderCart()
       case "Donations":
+        console.log('🔍 Rendering Donations');
         return renderDonations()
       case "Orders":
+        console.log('🔍 Rendering Orders');
         return renderOrders()
       case "My Purchases":
+        console.log('🔍 Rendering My Purchases');
         return renderMyPurchases()
       case "Notifications":
+        console.log('🔍 Rendering Notifications');
         return renderNotifications()
       case "Settings":
+        console.log('🔍 Rendering Settings');
         return renderSettings()
       default:
+        console.log('🔍 Rendering Default (Dashboard)');
         return renderDashboard()
     }
   }
@@ -1656,10 +1674,19 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-6">
+              {/* Mobile hamburger menu */}
+              <Button
+                variant="ghost"
+                className="lg:hidden hover:bg-green-50 text-green-600"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu className="w-6 h-6" />
+              </Button>
+
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-500 to-green-600 bg-clip-text text-transparent">
                 JALAI
               </h1>
-              <Button variant="ghost" className="hover:bg-green-50 text-green-600 font-medium" onClick={goToHomePage}>
+              <Button variant="ghost" className="hidden sm:flex hover:bg-green-50 text-green-600 font-medium" onClick={goToHomePage}>
                 <Home className="w-5 h-5 mr-2" />
                 Home
               </Button>
@@ -1673,42 +1700,69 @@ export default function Dashboard() {
         </div>
       </nav>
 
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-lg p-6 flex flex-col">
-          <div className="mb-8 p-4 bg-gradient-to-r from-gray-500 to-green-600 rounded-lg text-white">
-            <h2 className="text-lg font-semibold">Welcome back,</h2>
-            <p className="text-xl font-bold">{userName}</p>
+        <div className={`
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out lg:transition-none flex flex-col
+        `}>
+          {/* Mobile close button */}
+          <div className="lg:hidden flex justify-end p-4">
+            <Button
+              variant="ghost"
+              onClick={() => setSidebarOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </Button>
           </div>
 
-          <nav className="flex-1">
-            <ul className="space-y-2">
-              {menuItems.map((item) => (
-                <li key={item.label}>
-                  <button
-                    onClick={() => setActiveSection(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                      item.active
-                        ? "bg-gradient-to-r from-gray-500 to-green-600 text-white shadow-lg"
-                        : "text-gray-600 hover:bg-green-50 hover:text-green-600"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="flex-1">{item.label}</span>
-                    {item.label === "Notifications" && notifications.filter(n => !n.isRead).length > 0 && (
-                      <Badge className="bg-red-500 text-white text-xs">
-                        {notifications.filter(n => !n.isRead).length}
-                      </Badge>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div className="p-6">
+            <div className="mb-8 p-4 bg-gradient-to-r from-gray-500 to-green-600 rounded-lg text-white">
+              <h2 className="text-lg font-semibold">Welcome back,</h2>
+              <p className="text-xl font-bold">{userName}</p>
+            </div>
+
+            <nav className="flex-1">
+              <ul className="space-y-2">
+                {menuItems.map((item) => (
+                  <li key={item.label}>
+                    <button
+                      onClick={() => {
+                        console.log('🔍 Sidebar menu clicked:', item.label);
+                        setActiveSection(item.label);
+                        setSidebarOpen(false); // Close mobile menu after selection
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
+                        item.active
+                          ? "bg-gradient-to-r from-gray-500 to-green-600 text-white shadow-lg"
+                          : "text-gray-600 hover:bg-green-50 hover:text-green-600"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="flex-1">{item.label}</span>
+                      {item.label === "Notifications" && notifications.filter(n => !n.isRead).length > 0 && (
+                        <Badge className="bg-red-500 text-white text-xs">
+                          {notifications.filter(n => !n.isRead).length}
+                        </Badge>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6 bg-gray-50">{renderContent()}</div>
+        <div className="flex-1 p-4 lg:p-6 bg-gray-50 lg:ml-0">
+          {renderContent()}
+        </div>
       </div>
 
       {/* Footer */}
