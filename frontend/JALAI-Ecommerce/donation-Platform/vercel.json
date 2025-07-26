@@ -5,7 +5,9 @@
   "installCommand": "npm ci --legacy-peer-deps",
   "framework": "vite",
   "env": {
-    "NODE_VERSION": "18.x"
+    "NODE_VERSION": "18.x",
+    "VITE_API_URL": "https://jalai-ecommerce-donation-platform-3.onrender.com",
+    "REACT_APP_API_URL": "https://jalai-ecommerce-donation-platform-3.onrender.com"
   },
   "rewrites": [
     {

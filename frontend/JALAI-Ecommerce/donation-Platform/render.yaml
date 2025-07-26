@@ -6,8 +6,17 @@ services:
     staticPublishPath: frontend/JALAI-Ecommerce/donation-Platform/dist
     routes:
       - type: rewrite
-        source: /*
-        destination: /index.html
+        source: "/*"
+        destination: "/index.html"
+    headers:
+      - source: "*.js"
+        headers:
+          - key: "Cache-Control"
+            value: "public, max-age=31536000, immutable"
+      - source: "*.css"
+        headers:
+          - key: "Cache-Control"
+            value: "public, max-age=31536000, immutable"
     envVars:
       - key: NODE_VERSION
         value: 18.20.0
