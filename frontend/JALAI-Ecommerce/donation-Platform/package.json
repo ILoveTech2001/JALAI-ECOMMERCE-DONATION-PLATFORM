@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:netlify": "npm ci --legacy-peer-deps && vite build",
+    "build:render": "npm ci --legacy-peer-deps && CI=false vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest"

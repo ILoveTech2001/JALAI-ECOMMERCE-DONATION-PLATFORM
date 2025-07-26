@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: jalai-frontend
+    env: static
+    buildCommand: cd frontend/JALAI-Ecommerce/donation-Platform && npm ci --legacy-peer-deps && npm run build
+    staticPublishPath: frontend/JALAI-Ecommerce/donation-Platform/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 18.20.0
+      - key: NPM_FLAGS
+        value: --legacy-peer-deps
+      - key: CI
+        value: false
+      - key: VITE_API_URL
+        value: https://jalai-ecommerce-donation-platform-3.onrender.com/api
+      - key: REACT_APP_API_URL
+        value: https://jalai-ecommerce-donation-platform-3.onrender.com/api
+      - key: NODE_ENV
+        value: production
