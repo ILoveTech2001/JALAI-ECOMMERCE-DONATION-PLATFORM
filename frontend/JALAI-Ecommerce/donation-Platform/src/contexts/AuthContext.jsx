@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/apiService';
 
 const AuthContext = createContext();
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -17,19 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper function for persistent logging
-  const persistentLog = useCallback((message, data = null) => {
-    const logEntry = `[${new Date().toLocaleTimeString()}] ${message}`;
-    console.log(logEntry, data);
-
-    // Store in sessionStorage for debugging
-    const logs = JSON.parse(sessionStorage.getItem('authLogs') || '[]');
-    logs.push({ time: new Date().toLocaleTimeString(), message, data });
-    sessionStorage.setItem('authLogs', JSON.stringify(logs.slice(-20))); // Keep last 20 logs
-  }, []);
-
   // Wrapper for setUser with logging
-  const setUser = useCallback((newUser) => {
+  const setUser = (newUser) => {
     const fromUser = userState;
     const toUser = newUser;
 
@@ -55,9 +43,20 @@ export const AuthProvider = ({ children }) => {
     }
 
     setUserState(newUser);
-  }, [userState, persistentLog]);
+  };
 
   const user = userState;
+
+  // Helper function for persistent logging
+  const persistentLog = (message, data = null) => {
+    const logEntry = `[${new Date().toLocaleTimeString()}] ${message}`;
+    console.log(logEntry, data);
+
+    // Store in sessionStorage for debugging
+    const logs = JSON.parse(sessionStorage.getItem('authLogs') || '[]');
+    logs.push({ time: new Date().toLocaleTimeString(), message, data });
+    sessionStorage.setItem('authLogs', JSON.stringify(logs.slice(-20))); // Keep last 20 logs
+  };
 
   // Removed custom localStorage logging overrides to prevent log spam
 
@@ -122,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [user, persistentLog, setUser]);
+  }, [user]);
 
   const login = async (email, password) => {
     try {
@@ -150,26 +149,14 @@ export const AuthProvider = ({ children }) => {
 
         // Validate user data before storing
         if (response.user.email && response.user.userType) {
-          persistentLog('Setting user in context...', response.user);
-
-          // Set user state immediately
           setUser(response.user);
-
-          // Store in localStorage
           const userDataString = JSON.stringify(response.user);
           localStorage.setItem('userData', userDataString);
-
-          persistentLog('✅ User successfully set in context and localStorage', {
+          persistentLog('User set in context and localStorage', {
             userType: response.user.userType,
             email: response.user.email,
-            dataLength: userDataString.length,
-            userSetInContext: true,
-            timestamp: new Date().toISOString()
+            dataLength: userDataString.length
           });
-
-          // Force a small delay to ensure state is updated
-          await new Promise(resolve => setTimeout(resolve, 100));
-
         } else {
           persistentLog('ERROR: Invalid user data structure', response.user);
           throw new Error('Invalid user data received from server');

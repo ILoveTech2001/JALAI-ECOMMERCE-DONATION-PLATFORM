@@ -120,7 +120,7 @@ const Header = ({ handleCartClick, cartItems, handleProfileClick, user, onLogout
               <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-md z-50 min-w-[150px]">
                 <button
                   onClick={() => {
-                    navigate("/userDashboard");
+                    navigate("/user-dashboard");
                     setProfileDropdownOpen(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"

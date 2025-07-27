@@ -82,7 +82,7 @@ export function useSignupForm() {
 
         // Only redirect on successful registration
         console.log('Redirecting to user dashboard...'); // Debug log
-        navigate('/userDashboard')
+        navigate('/user-dashboard')
       } catch (error) {
         console.error("Signup failed:", error)
         console.error('Signup error details:', {

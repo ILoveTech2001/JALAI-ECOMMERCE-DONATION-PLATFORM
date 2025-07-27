@@ -73,7 +73,7 @@ function Dashboard() {
               <h2 className="text-xl font-semibold text-green-800">Choose an Orphanage</h2>
               {user && (
                 <Button
-                  onClick={() => navigate('/userDashboard')}
+                  onClick={() => navigate('/user-dashboard')}
                   variant="outline"
                   className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
                 >
