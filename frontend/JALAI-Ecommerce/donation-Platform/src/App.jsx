@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import apiService from "./services/apiService";
 import { normalizeProduct, calculateTotal } from "./utils/priceUtils";
@@ -31,6 +32,10 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminLogin from "./components/Admin/AdminLogin";
 import TestConnectivity from "./components/TestConnectivity";
 import DebugControls from "./components/DebugControls";
+import SEOHead, { SEOConfigs } from "./components/SEO/SEOHead";
+import LocalBusinessSchema from "./components/SEO/LocalBusinessSchema";
+import GoogleAnalytics from "./components/Analytics/GoogleAnalytics";
+import SEOMonitor from "./components/SEO/SEOMonitor";
 
 
 import "./assets/globals.css"; // Import global styles
@@ -242,7 +247,10 @@ function AppContent() {
   };
 
   return (
-    <>
+    <HelmetProvider>
+      <SEOHead {...SEOConfigs.home} />
+      <LocalBusinessSchema />
+
       {/* Cart is always available */}
       <Cart
         open={cartOpen}
@@ -390,8 +398,12 @@ function AppContent() {
 
         {/* Debug Controls - Only show in development */}
         {import.meta.env.DEV && <DebugControls />}
+        {import.meta.env.DEV && <SEOMonitor />}
 
-    </>
+        {/* Analytics */}
+        <GoogleAnalytics />
+
+    </HelmetProvider>
   );
 }
 

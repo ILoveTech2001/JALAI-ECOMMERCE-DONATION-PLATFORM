@@ -10,6 +10,7 @@ import ReviewCard from "../components/ReviewCard";
 import ViewProductDetails from "../components/ViewProductDetails";
 import apiService from "../services/apiService";
 import { normalizePrice } from "../utils/priceUtils";
+import SEOHead, { SEOConfigs } from "../components/SEO/SEOHead";
 // You can use Lucide, Heroicons, or SVGs for icons. Here are SVGs for simplicity:
 const CartIcon = () => (
   <svg
@@ -82,16 +83,16 @@ const heroSlides = [
   {
     bg: "bg-gradient-to-r from-green-100 via-blue-50 to-white",
     image: "/hand-shake.jpg",
-    title:
-      "A market place designed to help people connect and fulfill each other's needs through the exchange of quality pre-owned products",
+    title: "Buy & Sell Pre-owned Items in Cameroon | Quality Electronics, Clothing & Furniture",
+    subtitle: "Connect with buyers and sellers across Cameroon. Secure Mobile Money payments, quality products, and trusted transactions on JALAI marketplace.",
     buttons: [
       {
-        label: "Sell Now",
+        label: "Start Selling",
         style: "bg-green-600 hover:bg-green-700",
         onClick: () => alert("Sell Now clicked!"),
       },
       {
-        label: "Buy Now",
+        label: "Shop Now",
         style: "bg-blue-600 hover:bg-blue-700",
         onClick: () => alert("Buy Now clicked!"),
       },
@@ -100,12 +101,18 @@ const heroSlides = [
   {
     bg: "bg-gradient-to-r from-blue-100 via-green-50 to-white",
     image: "/kids-smiling.jpeg",
-    title: "A place where you can put a smile on others faces",
+    title: "Support Orphanages in Cameroon | Make a Difference with Your Donations",
+    subtitle: "Help children in need by donating to verified orphanages across Cameroon. Cash donations, item donations, and direct support - all with secure Mobile Money payments.",
     buttons: [
       {
         label: "Donate Now",
         style: "bg-yellow-500 hover:bg-yellow-600",
         onClick: () => alert("Donate Now clicked!"),
+      },
+      {
+        label: "View Orphanages",
+        style: "bg-purple-600 hover:bg-purple-700",
+        onClick: () => alert("View Orphanages clicked!"),
       },
     ],
   },
@@ -311,6 +318,8 @@ const Home = ({
 
   return (
     <div className="font-sans bg-gray-50 min-h-screen flex flex-col">
+      <SEOHead {...SEOConfigs.home} />
+
       {/* NAVBAR */}
       <Header
         cartItems={cartItems}
@@ -335,9 +344,14 @@ const Home = ({
           <div className="flex flex-col md:flex-row items-center min-h-[400px]">
             {/* Left: Text */}
             <div className="flex-1 flex flex-col justify-center p-8 md:p-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 leading-snug drop-shadow-lg">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-snug drop-shadow-lg">
                 {heroSlides[slide].title}
-              </h2>
+              </h1>
+              {heroSlides[slide].subtitle && (
+                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                  {heroSlides[slide].subtitle}
+                </p>
+              )}
               <div className="flex gap-4 mb-4 flex-wrap">
                 {heroSlides[slide].buttons.map((btn, idx) => (
                   <button
@@ -356,9 +370,10 @@ const Home = ({
                 {/* The image with blend mode */}
                 <img
                   src={heroSlides[slide].image}
-                  alt="Hero"
+                  alt={slide === 0 ? "People buying and selling pre-owned items in Cameroon marketplace" : "Children smiling at orphanage in Cameroon receiving donations"}
                   className="w-full h-full object-cover rounded-xl mix-blend-multiply opacity-90 transition-all duration-700"
                   style={{ background: "transparent" }}
+                  loading="eager"
                 />
                 {/* Optional: a subtle overlay for extra blending */}
                 <div className="absolute inset-0 rounded-xl bg-white/30 pointer-events-none" />
