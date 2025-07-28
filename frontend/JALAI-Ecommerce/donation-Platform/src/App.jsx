@@ -29,7 +29,6 @@ import BibleVerseScreen from "./components/BibleVerseScreen";
 import LoginPromptModal from "./components/LoginPromptModal";
 import PaymentModal from "./components/PaymentModal";
 import AdminDashboard from "./components/Admin/AdminDashboard";
-import AdminLogin from "./components/Admin/AdminLogin";
 import TestConnectivity from "./components/TestConnectivity";
 import DebugControls from "./components/DebugControls";
 import SEOHead, { SEOConfigs } from "./components/SEO/SEOHead";
@@ -369,7 +368,6 @@ function AppContent() {
           <Route path="/bible-verse" element={<BibleVerseScreen />} />
 
           {/* Admin Routes */}
-          <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
 
           {/* Test Route */}

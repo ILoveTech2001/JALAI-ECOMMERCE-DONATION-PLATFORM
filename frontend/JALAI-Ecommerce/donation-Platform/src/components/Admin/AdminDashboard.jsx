@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   ShoppingBag,
@@ -45,8 +46,9 @@ import CategoriesManagement from './CategoriesManagement';
 import AdminProfile from './AdminProfile';
 
 const AdminDashboard = () => {
-  // Use separate admin session instead of global auth context
-  const [adminUser, setAdminUser] = useState(null);
+  // Use global auth context
+  const { user, logout, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile
   const [activeTab, setActiveTab] = useState('overview');
@@ -59,34 +61,29 @@ const AdminDashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Check admin authentication on component mount
+  // Check admin authentication using global auth context
   useEffect(() => {
-    const adminToken = localStorage.getItem('adminToken');
-    const adminUserData = localStorage.getItem('adminUser');
-
-    if (!adminToken || !adminUserData) {
-      // No admin session, redirect to admin login
-      window.location.href = '/admin-login';
-      return;
-    }
-
-    try {
-      const user = JSON.parse(adminUserData);
-      if (user.userType !== 'ADMIN') {
-        // Not an admin user, redirect to admin login
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
-        window.location.href = '/admin-login';
+    if (!authLoading) {
+      if (!user) {
+        // No user logged in, redirect to login
+        navigate('/login', { replace: true });
         return;
       }
-      setAdminUser(user);
-    } catch (error) {
-      console.error('Error parsing admin user data:', error);
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      window.location.href = '/admin-login';
+
+      if (user.userType !== 'ADMIN') {
+        // Not an admin user, redirect to appropriate dashboard
+        if (user.userType === 'ORPHANAGE') {
+          navigate('/orphanage-dashboard', { replace: true });
+        } else {
+          navigate('/user-dashboard', { replace: true });
+        }
+        return;
+      }
+
+      // User is admin, continue with dashboard
+      console.log('Admin user authenticated:', user);
     }
-  }, []);
+  }, [user, authLoading, navigate]);
 
   // Check if mobile screen
   useEffect(() => {
@@ -224,11 +221,11 @@ const AdminDashboard = () => {
       }
     };
 
-    if (adminUser) {
+    if (user && user.userType === 'ADMIN') {
       fetchDashboardStats();
       fetchNotifications();
     }
-  }, [adminUser]);
+  }, [user]);
 
   const fetchNotifications = async () => {
     try {
@@ -267,13 +264,13 @@ const AdminDashboard = () => {
   // Refresh notifications every 30 seconds to get real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
-      if (adminUser) {
+      if (user && user.userType === 'ADMIN') {
         fetchNotifications();
       }
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [adminUser]);
+  }, [user]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -297,7 +294,7 @@ const AdminDashboard = () => {
   ];
 
   // Show loading while checking admin authentication
-  if (!adminUser) {
+  if (authLoading || !user || user.userType !== 'ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -502,15 +499,18 @@ const AdminDashboard = () => {
                     className="h-8 w-8 rounded-full"
                   />
                   <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {adminUser?.name || 'Admin User'}
+                    {user?.name || 'Admin User'}
                   </span>
                   <button
-                    onClick={() => {
-                      // Clear admin session
-                      localStorage.removeItem('adminToken');
-                      localStorage.removeItem('adminUser');
-                      // Use React Router navigation instead of window.location
-                      window.location.replace('/admin-login');
+                    onClick={async () => {
+                      try {
+                        await logout();
+                        navigate('/login', { replace: true });
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                        // Force logout even if API call fails
+                        navigate('/login', { replace: true });
+                      }
                     }}
                     className="ml-3 px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                   >
