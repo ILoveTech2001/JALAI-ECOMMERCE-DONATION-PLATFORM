@@ -27,13 +27,12 @@ export const AuthProvider = ({ children }) => {
         from: `${fromUser.userType} (${fromUser.name})`,
         to: 'null',
         fromActive: fromUser.isActive,
-        stackTrace: new Error().stack.split('\n').slice(1, 6).join('\n'),
         localStorage: {
           hasToken: !!localStorage.getItem('accessToken'),
           hasUserData: !!localStorage.getItem('userData')
         }
-      });
-    } else {
+      }, 'error');
+    } else if (localStorage.getItem('debugAuth') === 'true') {
       persistentLog('setUser called', {
         from: fromUser ? `${fromUser.userType} (${fromUser.name})` : 'null',
         to: toUser ? `${toUser.userType} (${toUser.name})` : 'null',
@@ -47,15 +46,34 @@ export const AuthProvider = ({ children }) => {
 
   const user = userState;
 
-  // Helper function for persistent logging
-  const persistentLog = (message, data = null) => {
-    const logEntry = `[${new Date().toLocaleTimeString()}] ${message}`;
-    console.log(logEntry, data);
+  // Helper function for controlled logging (only in development)
+  const persistentLog = (message, data = null, level = 'info') => {
+    // Only log in development mode or when explicitly enabled
+    const isDev = import.meta.env.DEV;
+    const debugAuth = localStorage.getItem('debugAuth') === 'true';
 
-    // Store in sessionStorage for debugging
-    const logs = JSON.parse(sessionStorage.getItem('authLogs') || '[]');
-    logs.push({ time: new Date().toLocaleTimeString(), message, data });
-    sessionStorage.setItem('authLogs', JSON.stringify(logs.slice(-20))); // Keep last 20 logs
+    if (!isDev && !debugAuth) return;
+
+    const logEntry = `[AUTH ${new Date().toLocaleTimeString()}] ${message}`;
+
+    // Use appropriate console method based on level
+    switch (level) {
+      case 'error':
+        console.error(logEntry, data);
+        break;
+      case 'warn':
+        console.warn(logEntry, data);
+        break;
+      default:
+        console.log(logEntry, data);
+    }
+
+    // Store in sessionStorage for debugging (only keep last 10 entries)
+    if (debugAuth) {
+      const logs = JSON.parse(sessionStorage.getItem('authLogs') || '[]');
+      logs.push({ time: new Date().toLocaleTimeString(), message, data, level });
+      sessionStorage.setItem('authLogs', JSON.stringify(logs.slice(-10)));
+    }
   };
 
   // Removed custom localStorage logging overrides to prevent log spam
@@ -105,22 +123,25 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    // Monitor authentication state every 2 seconds for debugging
-    const interval = setInterval(() => {
-      const currentToken = localStorage.getItem('accessToken');
-      const currentUserData = localStorage.getItem('userData');
+    // Only monitor authentication state in debug mode
+    const debugAuth = localStorage.getItem('debugAuth') === 'true';
+    if (debugAuth) {
+      const interval = setInterval(() => {
+        const currentToken = localStorage.getItem('accessToken');
+        const currentUserData = localStorage.getItem('userData');
 
-      if (user && (!currentToken || !currentUserData)) {
-        persistentLog('🚨 AUTHENTICATION STATE MISMATCH DETECTED', {
-          userInContext: user ? `${user.userType} (${user.name})` : 'null',
-          hasTokenInStorage: !!currentToken,
-          hasUserDataInStorage: !!currentUserData,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }, 2000);
+        if (user && (!currentToken || !currentUserData)) {
+          persistentLog('🚨 AUTHENTICATION STATE MISMATCH DETECTED', {
+            userInContext: user ? `${user.userType} (${user.name})` : 'null',
+            hasTokenInStorage: !!currentToken,
+            hasUserDataInStorage: !!currentUserData,
+            timestamp: new Date().toISOString()
+          }, 'warn');
+        }
+      }, 10000); // Reduced frequency to 10 seconds
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
   const login = async (email, password) => {
@@ -131,11 +152,13 @@ export const AuthProvider = ({ children }) => {
       persistentLog('Login attempt started', { email });
 
       const response = await apiService.login(email, password);
-      persistentLog('Login response received', {
-        hasResponse: !!response,
-        responseType: typeof response,
-        responseKeys: response ? Object.keys(response) : null
-      });
+      if (localStorage.getItem('debugAuth') === 'true') {
+        persistentLog('Login response received', {
+          hasResponse: !!response,
+          responseType: typeof response,
+          responseKeys: response ? Object.keys(response) : null
+        });
+      }
 
       // Handle different possible response structures
       if (!response) {
@@ -256,14 +279,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      persistentLog('🚨 LOGOUT CALLED - starting logout process', {
-        currentUser: user ? `${user.userType} (${user.name})` : 'null',
-        stackTrace: new Error().stack.split('\n').slice(1, 6).join('\n')
+      persistentLog('Logout initiated', {
+        currentUser: user ? `${user.userType} (${user.name})` : 'null'
       });
       setLoading(true);
       await apiService.logout();
     } catch (error) {
-      persistentLog('Logout error occurred', error);
+      persistentLog('Logout error occurred', error, 'error');
       console.error('Logout error:', error);
     } finally {
       persistentLog('Logout completed - clearing user state');

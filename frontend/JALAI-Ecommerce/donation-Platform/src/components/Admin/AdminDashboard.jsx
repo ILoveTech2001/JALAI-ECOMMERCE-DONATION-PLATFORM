@@ -509,7 +509,8 @@ const AdminDashboard = () => {
                       // Clear admin session
                       localStorage.removeItem('adminToken');
                       localStorage.removeItem('adminUser');
-                      window.location.href = '/admin-login';
+                      // Use React Router navigation instead of window.location
+                      window.location.replace('/admin-login');
                     }}
                     className="ml-3 px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                   >

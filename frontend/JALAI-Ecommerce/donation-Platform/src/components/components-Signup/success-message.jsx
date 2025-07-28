@@ -111,7 +111,7 @@ export function SuccessMessage({ formData, onReset }) {
             <Button
               variant="outline"
               className="border border-green-200/60 hover:border-green-400/60 hover:bg-green-50/50 text-green-700 rounded-xl"
-              onClick={() => (window.location.href = "/")}
+              onClick={() => window.location.replace("/")}
             >
               Return to Homepage
               <ArrowRight className="ml-2 h-4 w-4" />

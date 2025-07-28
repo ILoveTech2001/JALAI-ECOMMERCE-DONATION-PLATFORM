@@ -123,7 +123,7 @@ export function SuccessMessage({ formData, onReset }) {
           <Button
             variant="outline"
             className="flex-1 border-green-200 text-green-700 hover:bg-green-50 py-3 rounded-2xl"
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.replace('/')}
           >
             <Home className="h-4 w-4 mr-2" />
             Return to Home

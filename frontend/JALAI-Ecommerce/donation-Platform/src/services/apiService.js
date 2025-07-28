@@ -3,7 +3,11 @@ class ApiService {
   constructor() {
     // Use environment variable for production, fallback to localhost for development
     // Support both Vite (VITE_) and Create React App (REACT_APP_) environment variables
-    this.baseURL = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com';
+    const baseURL = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || 'https://jalai-ecommerce-donation-platform-3.onrender.com';
+
+    // Ensure the base URL includes /api path
+    this.baseURL = baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`;
+
     console.log('🔧 API Service initialized with baseURL:', this.baseURL);
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
   }
@@ -33,7 +37,10 @@ class ApiService {
     };
 
     try {
-      console.log(`Making public API request to: ${url}`);
+      // Only log in development mode
+      if (import.meta.env.DEV) {
+        console.log(`Making public API request to: ${url}`);
+      }
       const response = await fetch(url, config);
 
       if (!response.ok) {
@@ -47,7 +54,9 @@ class ApiService {
         return await response.json();
       } else {
         const textResponse = await response.text();
-        console.log(`Non-JSON response from ${url}:`, textResponse);
+        if (import.meta.env.DEV) {
+          console.log(`Non-JSON response from ${url}:`, textResponse);
+        }
         try {
           return JSON.parse(textResponse);
         } catch {
@@ -71,8 +80,8 @@ class ApiService {
       this.token = currentToken;
     }
 
-    // Debug authentication for order creation
-    if (endpoint.includes('orders/create-from-cart')) {
+    // Debug authentication for order creation (only in dev mode)
+    if (import.meta.env.DEV && endpoint.includes('orders/create-from-cart')) {
       console.log('=== ORDER CREATION REQUEST DEBUG ===');
       console.log('URL:', url);
       console.log('this.token:', this.token ? `${this.token.substring(0, 20)}...` : 'NO TOKEN');
@@ -92,9 +101,12 @@ class ApiService {
     };
 
     try {
-      console.log(`Making API request to: ${url}`); // Debug log
-      if (endpoint.includes('orders/create-from-cart')) {
-        console.log('Request headers:', config.headers);
+      // Only log in development mode
+      if (import.meta.env.DEV) {
+        console.log(`Making API request to: ${url}`);
+        if (endpoint.includes('orders/create-from-cart')) {
+          console.log('Request headers:', config.headers);
+        }
       }
       const response = await fetch(url, config);
 
@@ -115,7 +127,6 @@ class ApiService {
           this.clearToken();
           // Don't auto-redirect - let the component handle it
           throw new Error('Authentication failed. Please log in again.');
-          return;
         }
 
         if (response.status === 403) {
@@ -365,6 +376,13 @@ class ApiService {
   async createProduct(productData) {
     return this.request('/products', {
       method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  async updateProduct(id, productData) {
+    return this.request(`/products/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(productData),
     });
   }
@@ -953,6 +971,37 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(paymentData),
     });
+  }
+
+  async processMobileMoneyPayment(paymentData) {
+    return this.request('/payments/mobile-money', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  async confirmPayment(paymentId) {
+    return this.request(`/payments/${paymentId}/confirm`, {
+      method: 'POST',
+    });
+  }
+
+  async cancelPayment(paymentId) {
+    return this.request(`/payments/${paymentId}/cancel`, {
+      method: 'POST',
+    });
+  }
+
+  async getPaymentsByClient(clientId) {
+    return this.request(`/payments/client/${clientId}`);
+  }
+
+  async getPaymentByOrder(orderId) {
+    return this.request(`/payments/order/${orderId}`);
+  }
+
+  async getPaymentStats() {
+    return this.request('/payments/stats');
   }
 }
 

@@ -15,6 +15,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  define: {
+    // Define process.env for compatibility with legacy code
+    'process.env': {},
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

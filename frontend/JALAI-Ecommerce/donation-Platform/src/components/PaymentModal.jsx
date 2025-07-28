@@ -50,10 +50,21 @@ const PaymentModal = ({
     setPaymentStep('processing');
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Import apiService
+      const apiService = (await import('../services/apiService')).default;
 
-      // Create order after successful payment
+      // Process mobile money payment through backend
+      const paymentData = {
+        clientId: user.id,
+        orderId: null, // Will be set after order creation
+        amount: cartTotal,
+        phoneNumber: phoneNumber,
+        provider: paymentMethod === 'mobile_money' ? 'MTN' : 'ORANGE'
+      };
+
+      console.log('Processing payment with data:', paymentData);
+
+      // Create order first, then process payment
       const orderData = {
         clientId: user.id,
         items: cartItems,
@@ -63,11 +74,15 @@ const PaymentModal = ({
         status: 'CONFIRMED'
       };
 
-      // Call the payment success callback
+      // Call the payment success callback which creates the order
       await onPaymentSuccess(orderData);
 
+      // For now, simulate successful payment
+      // In a real implementation, you would call the payment API here
+      // const paymentResponse = await apiService.createPayment(paymentData);
+
       setPaymentStep('success');
-      
+
       // Auto close after success
       setTimeout(() => {
         onClose();

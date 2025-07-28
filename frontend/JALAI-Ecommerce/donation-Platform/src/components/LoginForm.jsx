@@ -65,31 +65,19 @@ export default function LoginForm() {
         console.log('🟢 User data before navigation:', response.user);
         console.log('🟢 UserType determined:', userType);
 
-        // Force a page reload after navigation to ensure clean state
+        // Use React Router for navigation (no page reload)
+        console.log('🟢 Using React Router navigation');
         if (userType === 'ADMIN') {
           console.log('🟢 Navigating to /admin');
-          window.location.href = '/admin';
+          navigate('/admin', { replace: true });
         } else if (userType === 'ORPHANAGE') {
           console.log('🟢 Navigating to /orphanage-dashboard');
-          window.location.href = '/orphanage-dashboard';
+          navigate('/orphanage-dashboard', { replace: true });
         } else {
-          console.log('🟢 CRITICAL: Navigating to /user-dashboard');
-          console.log('🟢 Using window.location.href for hard navigation');
-          window.location.href = '/user-dashboard';
+          console.log('🟢 Navigating to /user-dashboard');
+          navigate('/user-dashboard', { replace: true });
         }
-
-        // Fallback with React Router if window.location doesn't work
-        setTimeout(() => {
-          console.log('🟡 Fallback: Using React Router navigation');
-          if (userType === 'ADMIN') {
-            navigate('/admin', { replace: true });
-          } else if (userType === 'ORPHANAGE') {
-            navigate('/orphanage-dashboard', { replace: true });
-          } else {
-            navigate('/user-dashboard', { replace: true });
-          }
-        }, 500);
-      }, 1500); // Increased to 1500ms to ensure AuthContext is fully updated
+      }, 100); // Quick navigation after AuthContext is updated
 
     } catch (error) {
       console.error('Login failed:', error)

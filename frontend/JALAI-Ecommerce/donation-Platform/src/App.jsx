@@ -29,6 +29,8 @@ import LoginPromptModal from "./components/LoginPromptModal";
 import PaymentModal from "./components/PaymentModal";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminLogin from "./components/Admin/AdminLogin";
+import TestConnectivity from "./components/TestConnectivity";
+import DebugControls from "./components/DebugControls";
 
 
 import "./assets/globals.css"; // Import global styles
@@ -231,12 +233,12 @@ function AppContent() {
   // Handle login prompt actions
   const handleLoginPromptSignup = () => {
     setShowLoginPrompt(false);
-    window.location.href = "/signup";
+    navigate("/signup");
   };
 
   const handleLoginPromptLogin = () => {
     setShowLoginPrompt(false);
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
@@ -361,6 +363,9 @@ function AppContent() {
           {/* Admin Routes */}
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
+
+          {/* Test Route */}
+          <Route path="/test-connectivity" element={<TestConnectivity />} />
         </Routes>
 
         {/* Login Prompt Modal */}
@@ -383,6 +388,8 @@ function AppContent() {
           user={user}
         />
 
+        {/* Debug Controls - Only show in development */}
+        {import.meta.env.DEV && <DebugControls />}
 
     </>
   );

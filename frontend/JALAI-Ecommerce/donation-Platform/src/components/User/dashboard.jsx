@@ -275,9 +275,8 @@ export default function UserDashboard() {
         price: parseFloat(formData.price),
         description: formData.description,
         categoryId: formData.category,
-        condition: formData.condition,
-        clientId: user.id,
-        imageFile: selectedPhoto?.file,
+        sellerId: user.id, // Backend expects sellerId, not clientId
+        imageUrl: selectedPhoto?.file ? URL.createObjectURL(selectedPhoto.file) : null,
       }
 
       const response = await apiService.createProduct(itemData)
@@ -321,7 +320,6 @@ export default function UserDashboard() {
         price: parseFloat(formData.price),
         description: formData.description,
         categoryId: formData.category,
-        condition: formData.condition,
       }
 
       await apiService.updateProduct(editingItem.id, updatedData)
