@@ -87,15 +87,13 @@ public class PaymentService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        // Send notification to admin
+        // Send notification to client
         try {
-            notificationService.createNotification(
-                "NEW_PAYMENT",
-                "New Payment Initiated",
-                String.format("Payment of %s XAF initiated by %s", amount, client.getName()),
-                null, // Send to all admins
+            notificationService.createCustomNotification(
                 clientId,
-                false
+                "Payment Initiated",
+                String.format("Your payment of %s XAF has been initiated and is being processed.", amount),
+                com.example.jalai_backend.model.Notification.NotificationType.PAYMENT_INITIATED
             );
         } catch (Exception e) {
             // Log error but don't fail payment creation

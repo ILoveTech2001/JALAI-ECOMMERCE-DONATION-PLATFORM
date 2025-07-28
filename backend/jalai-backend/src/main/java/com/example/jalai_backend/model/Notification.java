@@ -86,6 +86,7 @@ public class Notification {
         DONATION_COMPLETED,
         GENERAL_ANNOUNCEMENT,
         SYSTEM_ALERT,
+        PAYMENT_INITIATED,
         PAYMENT_RECEIVED,
         PAYMENT_FAILED
     }
