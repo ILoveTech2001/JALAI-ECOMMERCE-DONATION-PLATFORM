@@ -577,16 +577,26 @@ class ApiService {
   // Category methods
   async getCategories() {
     try {
-      return await this.publicRequest('/categories/public');
+      console.log('🔍 Fetching categories from:', `${this.baseURL}/categories/public`);
+      const response = await this.publicRequest('/categories/public');
+      console.log('✅ Categories fetched successfully:', response);
+      return response;
     } catch (error) {
-      console.warn('Failed to fetch categories, using fallback data:', error);
-      // Return fallback categories
+      console.error('❌ Failed to fetch categories from backend:', error);
+
+      // Only show fallback message once per session
+      if (!sessionStorage.getItem('categoriesFallbackShown')) {
+        console.warn('🔄 Using fallback categories due to backend connection issue');
+        sessionStorage.setItem('categoriesFallbackShown', 'true');
+      }
+
+      // Return fallback categories with proper structure
       return [
-        { id: 1, name: 'Clothing', description: 'Clothing and apparel items', isActive: true },
-        { id: 2, name: 'Footwear', description: 'Shoes and footwear items', isActive: true },
-        { id: 3, name: 'Utensils', description: 'Kitchen and dining utensils', isActive: true },
-        { id: 4, name: 'Electronics', description: 'Electronic devices and gadgets', isActive: true },
-        { id: 5, name: 'Furniture', description: 'Furniture and home items', isActive: true }
+        { id: 1, name: 'Clothing', description: 'Clothing and apparel items', isActive: true, createdAt: new Date().toISOString() },
+        { id: 2, name: 'Footwear', description: 'Shoes and footwear items', isActive: true, createdAt: new Date().toISOString() },
+        { id: 3, name: 'Utensils', description: 'Kitchen and dining utensils', isActive: true, createdAt: new Date().toISOString() },
+        { id: 4, name: 'Electronics', description: 'Electronic devices and gadgets', isActive: true, createdAt: new Date().toISOString() },
+        { id: 5, name: 'Furniture', description: 'Furniture and home items', isActive: true, createdAt: new Date().toISOString() }
       ];
     }
   }

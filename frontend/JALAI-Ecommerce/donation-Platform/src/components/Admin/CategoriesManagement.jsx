@@ -20,17 +20,31 @@ const CategoriesManagement = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fetchAttempts, setFetchAttempts] = useState(0);
 
-  // Fetch categories from backend
+  // Fetch categories from backend with debouncing
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    // Prevent excessive API calls
+    if (fetchAttempts > 3) {
+      console.warn('Too many fetch attempts, using fallback data');
+      setError('Unable to connect to server. Using offline data.');
+      setLoading(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetchCategories();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [fetchAttempts]);
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
+      setFetchAttempts(prev => prev + 1);
+
       const response = await apiService.getCategories();
-      console.log('Categories response:', response);
 
       // Transform backend data to match frontend expectations
       const transformedCategories = response.map(category => ({
@@ -44,10 +58,12 @@ const CategoriesManagement = () => {
 
       setCategories(transformedCategories);
       setError(null);
+      setFetchAttempts(0); // Reset attempts on success
     } catch (error) {
       console.error('Error fetching categories:', error);
-      setError('Failed to load categories');
-      // Set empty array as fallback
+      setError('Failed to load categories. Using fallback data.');
+
+      // Use fallback data if API fails
       setCategories([]);
     } finally {
       setLoading(false);

@@ -45,9 +45,7 @@ export default function LoginForm() {
     setError("") // Clear local error state
 
     try {
-      console.log('🟢 Starting login process...');
       const response = await login(email, password)
-      console.log('🟢 Login response:', response);
 
       // Clear form
       setEmail("")
@@ -56,25 +54,15 @@ export default function LoginForm() {
 
       // Get user type from response
       const userType = response?.user?.userType
-      console.log('🟢 User type:', userType);
 
       // Give AuthContext a moment to fully set the user state before navigating
       setTimeout(() => {
-        console.log('🟢 CRITICAL: Starting navigation process...');
-        console.log('🟢 Current URL before navigation:', window.location.href);
-        console.log('🟢 User data before navigation:', response.user);
-        console.log('🟢 UserType determined:', userType);
-
-        // Use React Router for navigation (no page reload)
-        console.log('🟢 Using React Router navigation');
+        // Navigate based on user type
         if (userType === 'ADMIN') {
-          console.log('🟢 Navigating to /admin');
           navigate('/admin', { replace: true });
         } else if (userType === 'ORPHANAGE') {
-          console.log('🟢 Navigating to /orphanage-dashboard');
           navigate('/orphanage-dashboard', { replace: true });
         } else {
-          console.log('🟢 Navigating to /user-dashboard');
           navigate('/user-dashboard', { replace: true });
         }
       }, 100); // Quick navigation after AuthContext is updated
