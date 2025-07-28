@@ -94,16 +94,24 @@ export const AuthProvider = ({ children }) => {
         if (token && userData) {
           try {
             const parsedUser = JSON.parse(userData);
+            console.log('🔄 AuthContext: Restoring user from localStorage:', {
+              userType: parsedUser.userType,
+              name: parsedUser.name,
+              email: parsedUser.email
+            });
             persistentLog('Restoring user from localStorage', parsedUser);
             setUser(parsedUser);
             apiService.setToken(token);
+            console.log('✅ AuthContext: User restored successfully');
           } catch (parseError) {
+            console.error('❌ AuthContext: Error parsing userData:', parseError);
             persistentLog('Error parsing userData - clearing corrupted data', parseError);
             localStorage.removeItem('userData');
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
           }
         } else {
+          console.log('⚠️ AuthContext: No valid token/userData found in localStorage');
           persistentLog('No valid token/userData found in localStorage');
         }
       } catch (error) {
@@ -172,15 +180,22 @@ export const AuthProvider = ({ children }) => {
 
         // Validate user data before storing
         if (response.user.email && response.user.userType) {
+          console.log('🔄 AuthContext: Setting user data after login:', {
+            userType: response.user.userType,
+            name: response.user.name,
+            email: response.user.email
+          });
           setUser(response.user);
           const userDataString = JSON.stringify(response.user);
           localStorage.setItem('userData', userDataString);
+          console.log('✅ AuthContext: User data stored in localStorage');
           persistentLog('User set in context and localStorage', {
             userType: response.user.userType,
             email: response.user.email,
             dataLength: userDataString.length
           });
         } else {
+          console.error('❌ AuthContext: Invalid user data structure:', response.user);
           persistentLog('ERROR: Invalid user data structure', response.user);
           throw new Error('Invalid user data received from server');
         }

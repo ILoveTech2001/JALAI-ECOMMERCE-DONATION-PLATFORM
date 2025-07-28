@@ -63,14 +63,22 @@ const AdminDashboard = () => {
 
   // Check admin authentication using global auth context
   useEffect(() => {
+    console.log('🔍 AdminDashboard auth check:', {
+      authLoading,
+      hasUser: !!user,
+      userType: user?.userType,
+      userName: user?.name
+    });
+
     if (!authLoading) {
       if (!user) {
-        // No user logged in, redirect to login
+        console.log('❌ No user found, redirecting to login');
         navigate('/login', { replace: true });
         return;
       }
 
       if (user.userType !== 'ADMIN') {
+        console.log('❌ User is not admin, redirecting based on type:', user.userType);
         // Not an admin user, redirect to appropriate dashboard
         if (user.userType === 'ORPHANAGE') {
           navigate('/orphanage-dashboard', { replace: true });
@@ -81,7 +89,11 @@ const AdminDashboard = () => {
       }
 
       // User is admin, continue with dashboard
-      console.log('Admin user authenticated:', user);
+      console.log('✅ Admin user authenticated successfully:', {
+        name: user.name,
+        email: user.email,
+        userType: user.userType
+      });
     }
   }, [user, authLoading, navigate]);
 
