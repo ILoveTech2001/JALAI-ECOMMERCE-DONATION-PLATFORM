@@ -193,27 +193,27 @@ const OrphanageDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex font-sans bg-gray-50">
+    <div className="min-h-screen flex flex-col lg:flex-row font-sans bg-gray-50">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main content */}
-      <main className="flex-1 p-2 sm:p-4 md:p-6 md:ml-64 transition-all">
+      <main className="flex-1 p-4 sm:p-6 lg:ml-64 transition-all overflow-x-hidden">
         {/* Topbar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">Dashboard</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Dashboard</h2>
             <p className="text-sm text-gray-600">Welcome back, {user?.name}</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={fetchDashboardData}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
-            <div className="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+            <div className="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
               {user?.name?.charAt(0) || 'O'}
             </div>
           </div>
@@ -227,47 +227,50 @@ const OrphanageDashboard = () => {
         )}
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-4 flex items-center">
-            <div className="p-3 rounded-full bg-green-100 mr-4">
-              <DollarSign className="h-6 w-6 text-green-600" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-start">
+            <div className="p-2 sm:p-3 rounded-full bg-green-100 mb-2 sm:mb-0 sm:mr-4">
+              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
             </div>
-            <div>
-              <span className="text-green-600 font-bold text-sm">Cash Donations</span>
-              <div className="text-2xl font-extrabold">
+            <div className="text-center sm:text-left">
+              <span className="text-green-600 font-bold text-xs sm:text-sm block">Cash Donations</span>
+              <div className="text-lg sm:text-2xl font-extrabold">
                 ${stats.totalCashDonations}
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 flex items-center">
-            <div className="p-3 rounded-full bg-blue-100 mr-4">
-              <Gift className="h-6 w-6 text-blue-600" />
+
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-start">
+            <div className="p-2 sm:p-3 rounded-full bg-blue-100 mb-2 sm:mb-0 sm:mr-4">
+              <Gift className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <div>
-              <span className="text-blue-600 font-bold text-sm">Kind Donations</span>
-              <div className="text-2xl font-extrabold">
+            <div className="text-center sm:text-left">
+              <span className="text-blue-600 font-bold text-xs sm:text-sm block">Kind Donations</span>
+              <div className="text-lg sm:text-2xl font-extrabold">
                 {stats.totalKindDonations}
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 flex items-center">
-            <div className="p-3 rounded-full bg-yellow-100 mr-4">
-              <Clock className="h-6 w-6 text-yellow-600" />
+
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-start">
+            <div className="p-2 sm:p-3 rounded-full bg-yellow-100 mb-2 sm:mb-0 sm:mr-4">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
             </div>
-            <div>
-              <span className="text-yellow-600 font-bold text-sm">Pending Requests</span>
-              <div className="text-2xl font-extrabold">
+            <div className="text-center sm:text-left">
+              <span className="text-yellow-600 font-bold text-xs sm:text-sm block">Pending</span>
+              <div className="text-lg sm:text-2xl font-extrabold">
                 {stats.totalRequests}
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 flex items-center">
-            <div className="p-3 rounded-full bg-purple-100 mr-4">
-              <MessageSquare className="h-6 w-6 text-purple-600" />
+
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:items-start">
+            <div className="p-2 sm:p-3 rounded-full bg-purple-100 mb-2 sm:mb-0 sm:mr-4">
+              <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
             </div>
-            <div>
-              <span className="text-purple-600 font-bold text-sm">Messages</span>
-              <div className="text-2xl font-extrabold">
+            <div className="text-center sm:text-left">
+              <span className="text-purple-600 font-bold text-xs sm:text-sm block">Messages</span>
+              <div className="text-lg sm:text-2xl font-extrabold">
                 {stats.pendingMessages}
               </div>
             </div>
@@ -275,8 +278,8 @@ const OrphanageDashboard = () => {
         </div>
 
         {/* Donations Management */}
-        <div className="bg-white p-2 sm:p-4 rounded-lg shadow border border-gray-200 mb-6 overflow-x-auto">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200 mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
             <h3 className="text-lg font-medium text-gray-700">
               Donation Requests
             </h3>
@@ -296,68 +299,75 @@ const OrphanageDashboard = () => {
               <p className="text-gray-500">No donations received yet</p>
             </div>
           ) : (
-            <div className="space-y-4 min-w-[600px]">
+            <div className="space-y-4">
               {donations.map((donation) => (
                 <div
                   key={donation.id}
-                  className="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b pb-4 border-gray-100 gap-4"
+                  className="bg-gray-50 p-4 rounded-lg border border-gray-200"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(donation.status)}`}>
                         {getStatusIcon(donation.status)}
                         {donation.status}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">
                         {donation.donationType}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="font-medium">Amount:</span>
-                        {donation.donationType === 'CASH'
-                          ? ` $${donation.cashAmount || 0}`
-                          : ` ${donation.itemDescription || 'N/A'}`
-                        }
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="bg-white p-2 rounded">
+                        <span className="font-medium text-gray-700">Amount:</span>
+                        <div className="text-gray-900">
+                          {donation.donationType === 'CASH'
+                            ? `$${donation.cashAmount || 0}`
+                            : donation.itemDescription || 'N/A'
+                          }
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Date:</span>
-                        {donation.appointmentDate
-                          ? new Date(donation.appointmentDate).toLocaleDateString()
-                          : new Date(donation.createdAt).toLocaleDateString()
-                        }
+                      <div className="bg-white p-2 rounded">
+                        <span className="font-medium text-gray-700">Date:</span>
+                        <div className="text-gray-900">
+                          {donation.appointmentDate
+                            ? new Date(donation.appointmentDate).toLocaleDateString()
+                            : new Date(donation.createdAt).toLocaleDateString()
+                          }
+                        </div>
                       </div>
                     </div>
+
+                    {donation.status === 'PENDING' && (
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                        <button
+                          onClick={() => handleDonationAction(donation.id, 'confirm')}
+                          disabled={actionLoading[donation.id]}
+                          className="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {actionLoading[donation.id] ? 'Processing...' : 'Accept'}
+                        </button>
+                        <button
+                          onClick={() => handleDonationAction(donation.id, 'reject')}
+                          disabled={actionLoading[donation.id]}
+                          className="flex-1 px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {actionLoading[donation.id] ? 'Processing...' : 'Reject'}
+                        </button>
+                      </div>
+                    )}
+
+                    {donation.status === 'CONFIRMED' && (
+                      <div className="pt-2">
+                        <button
+                          onClick={() => handleDonationAction(donation.id, 'complete')}
+                          disabled={actionLoading[donation.id]}
+                          className="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {actionLoading[donation.id] ? 'Processing...' : 'Mark Complete'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-
-                  {donation.status === 'PENDING' && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleDonationAction(donation.id, 'confirm')}
-                        disabled={actionLoading[donation.id]}
-                        className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {actionLoading[donation.id] ? 'Processing...' : 'Accept'}
-                      </button>
-                      <button
-                        onClick={() => handleDonationAction(donation.id, 'reject')}
-                        disabled={actionLoading[donation.id]}
-                        className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {actionLoading[donation.id] ? 'Processing...' : 'Reject'}
-                      </button>
-                    </div>
-                  )}
-
-                  {donation.status === 'CONFIRMED' && (
-                    <button
-                      onClick={() => handleDonationAction(donation.id, 'complete')}
-                      disabled={actionLoading[donation.id]}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {actionLoading[donation.id] ? 'Processing...' : 'Mark Complete'}
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
@@ -365,9 +375,9 @@ const OrphanageDashboard = () => {
         </div>
 
         {/* Recent Activity & Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <h4 className="text-md font-medium text-gray-700 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <h4 className="text-base sm:text-lg font-medium text-gray-700 mb-4">
               Donation Status Overview
             </h4>
             <div className="space-y-3">
@@ -377,19 +387,19 @@ const OrphanageDashboard = () => {
                 { status: 'COMPLETED', count: donations.filter(d => d.status === 'COMPLETED').length, color: 'bg-green-500' },
                 { status: 'REJECTED', count: donations.filter(d => d.status === 'REJECTED').length, color: 'bg-red-500' },
               ].map(({ status, count, color }) => (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div key={status} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${color}`}></div>
-                    <span className="text-sm text-gray-600">{status}</span>
+                    <span className="text-sm font-medium text-gray-700">{status}</span>
                   </div>
-                  <span className="font-semibold">{count}</span>
+                  <span className="font-bold text-lg text-gray-900">{count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
-            <h4 className="text-md font-medium text-gray-700 mb-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <h4 className="text-base sm:text-lg font-medium text-gray-700 mb-4">
               Donation Types
             </h4>
             <div className="space-y-3">
@@ -398,12 +408,12 @@ const OrphanageDashboard = () => {
                 { type: 'KIND', count: donations.filter(d => d.donationType === 'KIND').length, color: 'bg-blue-500' },
                 { type: 'BOTH', count: donations.filter(d => d.donationType === 'BOTH').length, color: 'bg-purple-500' },
               ].map(({ type, count, color }) => (
-                <div key={type} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${color}`}></div>
-                    <span className="text-sm text-gray-600">{type}</span>
+                    <span className="text-sm font-medium text-gray-700">{type}</span>
                   </div>
-                  <span className="font-semibold">{count}</span>
+                  <span className="font-bold text-lg text-gray-900">{count}</span>
                 </div>
               ))}
             </div>

@@ -34,6 +34,8 @@ import {
   XCircle,
   Clock,
   RefreshCw,
+  Menu,
+  X as CloseIcon,
 } from "lucide-react"
 
 export default function UserDashboard() {
@@ -41,6 +43,7 @@ export default function UserDashboard() {
   const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState("Dashboard")
   const [userName, setUserName] = useState("")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userStats, setUserStats] = useState({
     totalSpent: 0,
     totalEarned: 0,
@@ -477,96 +480,97 @@ export default function UserDashboard() {
 
   // Render functions for different sections
   const renderDashboard = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="bg-gradient-to-r from-gray-500 to-green-600 text-white rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <div className="bg-gradient-to-r from-gray-500 to-green-600 text-white rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold">Welcome back, {userName}!</h2>
-              <p className="text-green-100">Here's what's happening with your account</p>
+              <h2 className="text-xl sm:text-2xl font-bold">Welcome back, {userName}!</h2>
+              <p className="text-green-100 text-sm sm:text-base">Here's what's happening with your account</p>
             </div>
             <button
               onClick={refreshAllUserData}
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 self-start sm:self-auto"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              <span className="text-sm sm:text-base">Refresh</span>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-green-600">{userStats.totalSpent.toLocaleString()} FCFA</p>
-            <p className="text-gray-600">Total Spent</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <p className="text-2xl sm:text-3xl font-bold text-green-600">{userStats.totalSpent.toLocaleString()}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">FCFA Spent</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-blue-600">{userStats.totalEarned.toLocaleString()} FCFA</p>
-            <p className="text-gray-600">Total Earned</p>
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <p className="text-2xl sm:text-3xl font-bold text-blue-600">{userStats.totalEarned.toLocaleString()}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">FCFA Earned</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-purple-600">{orders.length}</p>
-            <p className="text-gray-600">Total Orders</p>
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <p className="text-2xl sm:text-3xl font-bold text-purple-600">{orders.length}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">Total Orders</p>
           </div>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-red-600">{donations.length}</p>
-            <p className="text-gray-600">Donations Made</p>
+          <div className="text-center p-4 bg-red-50 rounded-lg">
+            <p className="text-2xl sm:text-3xl font-bold text-red-600">{donations.length}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">Donations Made</p>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <button
             onClick={() => setActiveSection("Sell Item")}
-            className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg flex items-center justify-center gap-2"
+            className="h-16 sm:h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
           >
-            <ShoppingBag className="w-6 h-6" />
-            Sell an Item
+            <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-sm sm:text-base">Sell an Item</span>
           </button>
           <button
             onClick={() => navigate('/bible-verse', { replace: true })}
-            className="h-20 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg flex items-center justify-center gap-2"
+            className="h-16 sm:h-20 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
           >
-            <Heart className="w-6 h-6" />
-            Make a Donation
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-sm sm:text-base">Make a Donation</span>
           </button>
           <button
             onClick={() => setActiveSection("My Cart")}
-            className="h-20 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg flex items-center justify-center gap-2"
+            className="h-16 sm:h-20 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all"
           >
-            <CartIcon className="w-6 h-6" />
-            View Cart ({cartItems.length})
+            <CartIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-sm sm:text-base">View Cart ({cartItems.length})</span>
           </button>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {orders.length === 0 ? (
-            <div className="text-center py-8">
-              <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No recent activity</p>
-              <p className="text-sm text-gray-400">Your orders and donations will appear here</p>
+            <div className="text-center py-6 sm:py-8">
+              <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 text-sm sm:text-base">No recent activity</p>
+              <p className="text-xs sm:text-sm text-gray-400">Your orders and donations will appear here</p>
             </div>
           ) : (
             orders.slice(0, 3).map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className={`w-3 h-3 rounded-full ${order.type === "donation" ? "bg-red-500" : "bg-blue-500"}`}></div>
-                  <div>
-                    <h3 className="font-medium">{order.item || order.name}</h3>
-                    <p className="text-sm text-gray-500">{order.date || order.createdAt}</p>
+              <div key={order.id} className="flex items-center justify-between p-3 sm:p-4 border rounded-lg">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${order.type === "donation" ? "bg-red-500" : "bg-blue-500"}`}></div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium text-sm sm:text-base truncate">{order.item || order.name}</h3>
+                    <p className="text-xs sm:text-sm text-gray-500">{order.date || order.createdAt}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">{(order.amount || order.totalAmount || 0).toLocaleString()} FCFA</p>
-                  <p className="text-sm text-gray-500">{order.status}</p>
+                <div className="text-right flex-shrink-0 ml-2">
+                  <p className="font-medium text-sm sm:text-base">{(order.amount || order.totalAmount || 0).toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">FCFA</p>
+                  <p className="text-xs sm:text-sm text-gray-500">{order.status}</p>
                 </div>
               </div>
             ))
@@ -1119,23 +1123,44 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Navigation Bar */}
-      <nav className="bg-white shadow-lg border-b">
+      <nav className="bg-white shadow-lg border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-500 to-green-600 bg-clip-text text-transparent">
+            <div className="flex items-center gap-2 sm:gap-6">
+              {/* Mobile menu button */}
+              <button
+                className="lg:hidden hover:bg-green-50 p-2 rounded-lg"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu className="w-6 h-6 text-green-600" />
+              </button>
+
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-500 to-green-600 bg-clip-text text-transparent">
                 JALAI
               </h1>
+
               <button
-                className="hover:bg-green-50 text-green-600 font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+                className="hidden sm:flex hover:bg-green-50 text-green-600 font-medium px-4 py-2 rounded-lg items-center gap-2"
                 onClick={goToHomePage}
               >
                 <Home className="w-5 h-5" />
-                Home
+                <span className="hidden md:inline">Home</span>
               </button>
             </div>
-            <div className="flex items-center gap-4">
-              <button className="hover:bg-green-50 p-2 rounded-lg">
+
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Mobile home button */}
+              <button
+                className="sm:hidden hover:bg-green-50 p-2 rounded-lg"
+                onClick={goToHomePage}
+              >
+                <Home className="w-5 h-5 text-green-600" />
+              </button>
+
+              <button
+                className="hover:bg-green-50 p-2 rounded-lg"
+                onClick={() => setActiveSection("Settings")}
+              >
                 <Settings className="w-5 h-5 text-green-600" />
               </button>
             </div>
@@ -1143,69 +1168,102 @@ export default function UserDashboard() {
         </div>
       </nav>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-lg p-6 flex flex-col">
-          <div className="mb-8 p-4 bg-gradient-to-r from-gray-500 to-green-600 rounded-lg text-white">
-            <h2 className="text-lg font-semibold">Welcome back,</h2>
-            <p className="text-xl font-bold">{userName}</p>
+        <div className={`
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out
+          flex flex-col
+        `}>
+          {/* Mobile close button */}
+          <div className="lg:hidden flex justify-end p-4">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="hover:bg-gray-100 p-2 rounded-lg"
+            >
+              <CloseIcon className="w-6 h-6 text-gray-600" />
+            </button>
           </div>
 
-          <nav className="flex-1">
-            <ul className="space-y-2">
-              {menuItems.map((item) => (
-                <li key={item.label}>
-                  <button
-                    onClick={() => setActiveSection(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                      item.active
-                        ? "bg-gradient-to-r from-gray-500 to-green-600 text-white shadow-lg"
-                        : "text-gray-600 hover:bg-green-50 hover:text-green-600"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="flex-1">{item.label}</span>
-                    {item.label === "Notifications" && notifications.filter(n => !n.isRead).length > 0 && (
-                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                        {notifications.filter(n => !n.isRead).length}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div className="px-6 pb-6">
+            <div className="mb-8 p-4 bg-gradient-to-r from-gray-500 to-green-600 rounded-lg text-white">
+              <h2 className="text-lg font-semibold">Welcome back,</h2>
+              <p className="text-xl font-bold truncate">{userName}</p>
+            </div>
+
+            <nav className="flex-1">
+              <ul className="space-y-2">
+                {menuItems.map((item) => (
+                  <li key={item.label}>
+                    <button
+                      onClick={() => {
+                        setActiveSection(item.label)
+                        setSidebarOpen(false) // Close mobile sidebar on selection
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
+                        item.active
+                          ? "bg-gradient-to-r from-gray-500 to-green-600 text-white shadow-lg"
+                          : "text-gray-600 hover:bg-green-50 hover:text-green-600"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.label === "Notifications" && notifications.filter(n => !n.isRead).length > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full flex-shrink-0">
+                          {notifications.filter(n => !n.isRead).length}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6 bg-gray-50">{renderContent()}</div>
+        <div className="flex-1 p-4 sm:p-6 bg-gray-50 lg:ml-0 overflow-x-hidden">
+          {renderContent()}
+        </div>
       </div>
 
       {/* Footer */}
       <footer className="bg-white border-t shadow-lg mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-center items-center gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex justify-center items-center gap-4 sm:gap-6">
             <button
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors"
               onClick={() => window.open("https://facebook.com", "_blank")}
+              title="Facebook"
             >
               <Facebook className="w-5 h-5" />
             </button>
             <button
-              className="text-blue-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded-lg"
+              className="text-blue-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition-colors"
               onClick={() => window.open("https://twitter.com", "_blank")}
+              title="Twitter"
             >
               <Twitter className="w-5 h-5" />
             </button>
             <button
-              className="text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg"
+              className="text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg transition-colors"
               onClick={() => window.open("https://wa.me/237XXXXXXXXX", "_blank")}
+              title="WhatsApp"
             >
               <MessageCircle className="w-5 h-5" />
             </button>
             <button
-              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg"
+              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-colors"
               onClick={() => window.open("tel:+237XXXXXXXXX", "_blank")}
+              title="Phone"
             >
               <Phone className="w-5 h-5" />
             </button>

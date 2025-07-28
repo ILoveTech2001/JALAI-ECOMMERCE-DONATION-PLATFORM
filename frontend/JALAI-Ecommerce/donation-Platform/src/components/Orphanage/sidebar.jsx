@@ -67,15 +67,15 @@ const Sidebar = () => {
     <>
       {/* Hamburger for mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded shadow"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg hover:bg-green-50 transition-colors"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
       >
-        <FontAwesomeIcon icon={faBars} className="text-green-600 text-2xl" />
+        <FontAwesomeIcon icon={faBars} className="text-green-600 text-xl" />
       </button>
 
       {/* Sidebar for desktop */}
-      <div className="hidden md:block fixed top-0 left-0 h-full z-40">
+      <div className="hidden lg:block fixed top-0 left-0 h-full z-40">
         {sidebarContent}
       </div>
 
