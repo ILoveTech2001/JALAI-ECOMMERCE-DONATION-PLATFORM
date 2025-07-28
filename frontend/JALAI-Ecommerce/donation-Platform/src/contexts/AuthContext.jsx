@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }) => {
       // Handle different possible response structures
       if (!response) {
         persistentLog('ERROR: No response received from server');
-        throw new Error('No response received from server');
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
 
       // Check if response has user data
@@ -215,11 +215,42 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       persistentLog('Login error occurred', {
         message: error.message,
-        name: error.name
+        name: error.name,
+        status: error.response?.status
       });
-      const errorMessage = error.message || 'Login failed due to unknown error';
+
+      let errorMessage = 'Login failed due to unknown error';
+
+      // Handle different types of errors with user-friendly messages
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        switch (status) {
+          case 401:
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+            break;
+          case 403:
+            errorMessage = 'Your account has been disabled. Please contact support.';
+            break;
+          case 404:
+            errorMessage = 'Account not found. Please check your email or register for a new account.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later or contact support.';
+            break;
+          default:
+            errorMessage = data?.message || `Login failed (Error ${status}). Please try again.`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setError(errorMessage);
-      throw error;
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
       persistentLog('Login attempt finished', { loading: false });
@@ -263,15 +294,44 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error('AuthContext register error:', error);
-      const errorMessage = error.message || 'Registration failed due to unknown error';
+
+      let errorMessage = 'Registration failed due to unknown error';
+
+      // Handle different types of errors with user-friendly messages
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        switch (status) {
+          case 400:
+            if (data?.message?.includes('email')) {
+              errorMessage = 'This email is already registered. Please use a different email or try logging in.';
+            } else if (data?.message?.includes('phone')) {
+              errorMessage = 'Invalid phone number format. Please use format: +237 XXX XXX XXX';
+            } else if (data?.message?.includes('validation')) {
+              errorMessage = 'Please check your information and ensure all fields are filled correctly.';
+            } else {
+              errorMessage = data?.message || 'Invalid registration data. Please check your information.';
+            }
+            break;
+          case 409:
+            errorMessage = 'An account with this email already exists. Please try logging in instead.';
+            break;
+          case 500:
+            errorMessage = 'Server error during registration. Please try again later.';
+            break;
+          default:
+            errorMessage = data?.message || `Registration failed (Error ${status}). Please try again.`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       setError(errorMessage);
-
-      // Don't auto-clear error - let it persist until user takes action
-      setTimeout(() => {
-        console.log('Registration error persisting for debugging:', errorMessage);
-      }, 100);
-
-      throw error;
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }

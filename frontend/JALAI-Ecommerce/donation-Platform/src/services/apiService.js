@@ -143,7 +143,16 @@ class ApiService {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
         console.error(`API Error: ${errorMessage}`, { url, status: response.status, errorData });
-        throw new Error(errorMessage);
+
+        // Create error with response information for better handling
+        const error = new Error(errorMessage);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData
+        };
+        error.request = { url, method: options.method || 'GET' };
+        throw error;
       }
 
       const contentType = response.headers.get('content-type');
@@ -180,7 +189,10 @@ class ApiService {
     } catch (error) {
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         console.error('Network error - Backend server may not be running:', error);
-        throw new Error(`Unable to connect to server. Please check if the backend is running on ${this.baseURL}`);
+        const networkError = new Error(`Unable to connect to server. Please check your internet connection and try again.`);
+        networkError.request = { url, method: options.method || 'GET' };
+        networkError.isNetworkError = true;
+        throw networkError;
       }
       console.error('API request failed:', error);
       throw error;

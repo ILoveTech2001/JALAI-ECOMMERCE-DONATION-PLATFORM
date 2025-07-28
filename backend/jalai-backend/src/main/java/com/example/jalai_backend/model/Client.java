@@ -43,8 +43,8 @@ public class Client {
     @Column(nullable = false)
     private String password;
 
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Phone number should be valid")
-    @Column(length = 20)
+    @Pattern(regexp = "^\\+?[0-9\\s\\-\\(\\)]{8,20}$", message = "Phone number should be valid (8-20 digits, spaces and dashes allowed)")
+    @Column(length = 25)
     private String phone;
 
     @Size(max = 255, message = "Location must not exceed 255 characters")
