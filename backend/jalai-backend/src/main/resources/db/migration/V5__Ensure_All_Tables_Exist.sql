@@ -123,9 +123,9 @@ CREATE TABLE IF NOT EXISTS payments (
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 );
 
--- Insert default admin if not exists
+-- Insert default admin if not exists (password: admin123)
 INSERT INTO admins (name, email, password, is_active)
-SELECT 'System Admin', 'admin@jalai.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM5lIX.P9fUKKDDN2Z6y', true
+SELECT 'System Admin', 'admin@jalai.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', true
 WHERE NOT EXISTS (SELECT 1 FROM admins WHERE email = 'admin@jalai.com');
 
 -- Insert sample orphanage if not exists

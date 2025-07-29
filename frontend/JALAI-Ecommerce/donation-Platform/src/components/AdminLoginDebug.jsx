@@ -6,8 +6,8 @@ const AdminLoginDebug = () => {
   const { user, login, loading } = useAuth();
   const navigate = useNavigate();
   const [debugInfo, setDebugInfo] = useState({});
-  const [testEmail] = useState('admin@jalai.com');
-  const [testPassword] = useState('password123');
+  const [testEmail, setTestEmail] = useState('admin@jalai.com');
+  const [testPassword, setTestPassword] = useState('admin123');
 
   useEffect(() => {
     const updateDebugInfo = () => {
@@ -68,13 +68,35 @@ const AdminLoginDebug = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
+          <h3 className="text-lg font-semibold mb-2">Test Credentials</h3>
+          <div className="space-y-2 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Email:</label>
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Password:</label>
+              <input
+                type="password"
+                value={testPassword}
+                onChange={(e) => setTestPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
           <h3 className="text-lg font-semibold mb-2">Actions</h3>
           <div className="space-y-2">
             <button
               onClick={handleTestLogin}
               className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
-              Test Admin Login
+              Test Login ({testEmail})
             </button>
             <button
               onClick={handleNavigateToAdmin}
@@ -88,6 +110,21 @@ const AdminLoginDebug = () => {
             >
               Clear Storage & Reload
             </button>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="text-sm font-semibold mb-2">Try These Passwords:</h4>
+            <div className="space-y-1">
+              {['admin123', 'password123', 'admin', 'password'].map(pwd => (
+                <button
+                  key={pwd}
+                  onClick={() => setTestPassword(pwd)}
+                  className="block w-full text-left px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+                >
+                  {pwd}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
