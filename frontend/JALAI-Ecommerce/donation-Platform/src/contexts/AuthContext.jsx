@@ -21,8 +21,24 @@ export const AuthProvider = ({ children }) => {
     const fromUser = userState;
     const toUser = newUser;
 
+    console.log('🔄 AuthContext: setUser called', {
+      from: fromUser ? `${fromUser.userType} (${fromUser.name})` : 'null',
+      to: toUser ? `${toUser.userType} (${toUser.name})` : 'null',
+      timestamp: new Date().toISOString()
+    });
+
     // Special alert for when user goes from authenticated to null
     if (fromUser && !toUser) {
+      console.error('🚨 AuthContext: USER CLEARED - Authentication lost!', {
+        from: `${fromUser.userType} (${fromUser.name})`,
+        to: 'null',
+        fromActive: fromUser.isActive,
+        localStorage: {
+          hasToken: !!localStorage.getItem('accessToken'),
+          hasUserData: !!localStorage.getItem('userData')
+        },
+        stackTrace: new Error().stack
+      });
       persistentLog('🚨 USER CLEARED - Authentication lost!', {
         from: `${fromUser.userType} (${fromUser.name})`,
         to: 'null',
@@ -124,11 +140,13 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('refreshToken');
         }
       } finally {
+        console.log('🏁 AuthContext: Auth initialization completed');
         persistentLog('Auth initialization completed', { loading: false });
         setLoading(false);
       }
     };
 
+    console.log('🚀 AuthContext: Starting initialization...');
     initializeAuth();
 
     // Only monitor authentication state in debug mode
@@ -160,6 +178,10 @@ export const AuthProvider = ({ children }) => {
       persistentLog('Login attempt started', { email });
 
       const response = await apiService.login(email, password);
+      console.log('🔧 AuthContext: Raw login response:', response);
+      console.log('🔧 AuthContext: Response type:', typeof response);
+      console.log('🔧 AuthContext: Response keys:', response ? Object.keys(response) : null);
+
       if (localStorage.getItem('debugAuth') === 'true') {
         persistentLog('Login response received', {
           hasResponse: !!response,
@@ -170,6 +192,7 @@ export const AuthProvider = ({ children }) => {
 
       // Handle different possible response structures
       if (!response) {
+        console.error('❌ AuthContext: No response received from server');
         persistentLog('ERROR: No response received from server');
         throw new Error('Unable to connect to server. Please check your internet connection and try again.');
       }
@@ -204,6 +227,12 @@ export const AuthProvider = ({ children }) => {
         setTimeout(() => {
           const storedData = localStorage.getItem('userData');
           const storedToken = localStorage.getItem('accessToken');
+          console.log('🔍 AuthContext: Verification check after 1 second:', {
+            hasStoredData: !!storedData,
+            hasStoredToken: !!storedToken,
+            storedUserType: storedData ? JSON.parse(storedData).userType : null,
+            currentUserInContext: userState
+          });
           persistentLog('Verification check after 1 second', {
             hasStoredData: !!storedData,
             hasStoredToken: !!storedToken,
@@ -211,6 +240,7 @@ export const AuthProvider = ({ children }) => {
           });
         }, 1000);
 
+        console.log('✅ AuthContext: Login successful, returning response');
         return response;
       }
 
