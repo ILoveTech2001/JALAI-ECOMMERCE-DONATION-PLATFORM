@@ -60,6 +60,8 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [apiCallsDisabled, setApiCallsDisabled] = useState(false);
+  const [lastApiCallTime, setLastApiCallTime] = useState(0);
 
   // Check admin authentication using global auth context
   useEffect(() => {
@@ -125,11 +127,26 @@ const AdminDashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
 
-  // Fetch dashboard stats
+  // Fetch dashboard stats with error handling and rate limiting
   useEffect(() => {
     const fetchDashboardStats = async () => {
+      // Prevent API spam - only call once every 10 seconds
+      const now = Date.now();
+      if (now - lastApiCallTime < 10000) {
+        console.log('⏳ Skipping API call - too soon since last call');
+        return;
+      }
+
+      // Don't make calls if API is disabled due to errors
+      if (apiCallsDisabled) {
+        console.log('🚫 API calls disabled due to previous errors');
+        return;
+      }
+
       try {
         setLoading(true);
+        setLastApiCallTime(now);
+        console.log('📊 Fetching dashboard stats...');
         const stats = await apiService.getDashboardStats();
 
         // Transform API data to match the expected format
@@ -180,8 +197,23 @@ const AdminDashboard = () => {
 
         setDashboardStats(transformedStats);
       } catch (error) {
-        console.error('Failed to fetch dashboard stats:', error);
-        setError('Failed to load dashboard statistics');
+        console.error('❌ Failed to fetch dashboard stats:', error);
+
+        // Check if it's a resource error (backend overwhelmed)
+        if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES') ||
+            error.message?.includes('Network error')) {
+          console.warn('🚫 Disabling API calls for 5 minutes due to backend issues');
+          setApiCallsDisabled(true);
+          setError('Backend server is temporarily unavailable. Using offline data.');
+
+          // Re-enable API calls after 5 minutes
+          setTimeout(() => {
+            console.log('✅ Re-enabling API calls');
+            setApiCallsDisabled(false);
+          }, 300000); // 5 minutes
+        } else {
+          setError('Failed to load dashboard statistics');
+        }
 
         // Fallback to dummy data if API fails
         setDashboardStats([
@@ -240,7 +272,14 @@ const AdminDashboard = () => {
   }, [user]);
 
   const fetchNotifications = async () => {
+    // Don't make calls if API is disabled due to errors
+    if (apiCallsDisabled) {
+      console.log('🚫 Notifications API disabled due to previous errors');
+      return;
+    }
+
     try {
+      console.log('🔔 Fetching notifications...');
       // For admin, get system/admin notifications only (not client notifications)
       const allNotifications = await apiService.getAllNotifications();
 
@@ -258,7 +297,15 @@ const AdminDashboard = () => {
       const unread = adminNotifications.filter(n => !n.isRead).length;
       setUnreadCount(unread);
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error('❌ Failed to fetch notifications:', error);
+
+      // Check if it's a resource error (backend overwhelmed)
+      if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES') ||
+          error.message?.includes('Network error')) {
+        console.warn('🚫 Disabling notifications API due to backend issues');
+        // Don't disable all API calls, just skip notifications for now
+      }
+
       // Set empty array as fallback
       setNotifications([]);
       setUnreadCount(0);
@@ -273,16 +320,17 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // Refresh notifications every 30 seconds to get real-time updates
+  // Refresh notifications every 2 minutes to avoid overwhelming backend
   useEffect(() => {
     const interval = setInterval(() => {
-      if (user && user.userType === 'ADMIN') {
+      if (user && user.userType === 'ADMIN' && !apiCallsDisabled) {
+        console.log('🔄 Auto-refreshing notifications...');
         fetchNotifications();
       }
-    }, 30000); // 30 seconds
+    }, 120000); // 2 minutes instead of 30 seconds
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, apiCallsDisabled]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -540,7 +588,35 @@ const AdminDashboard = () => {
                 {/* Error Display */}
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600 text-sm">{error}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-red-600 text-sm">{error}</p>
+                      <button
+                        onClick={() => {
+                          setError(null);
+                          setApiCallsDisabled(false);
+                          setLastApiCallTime(0);
+                          if (user && user.userType === 'ADMIN') {
+                            fetchDashboardStats();
+                            fetchNotifications();
+                          }
+                        }}
+                        className="ml-4 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* API Status Indicator */}
+                {apiCallsDisabled && (
+                  <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
+                      <p className="text-yellow-700 text-sm">
+                        Backend connection temporarily disabled. Using cached data.
+                      </p>
+                    </div>
                   </div>
                 )}
 
