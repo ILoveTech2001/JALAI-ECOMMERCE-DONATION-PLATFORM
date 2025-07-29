@@ -393,10 +393,29 @@ class ApiService {
   }
 
   async createProduct(productData) {
-    return this.request('/products', {
-      method: 'POST',
-      body: JSON.stringify(productData),
+    console.log('🚀 Creating product with data:', {
+      name: productData.name,
+      price: productData.price,
+      description: productData.description?.substring(0, 50) + '...',
+      categoryId: productData.categoryId,
+      sellerId: productData.sellerId,
+      hasImageUrl: !!productData.imageUrl,
+      imageUrlType: productData.imageUrl?.startsWith('data:') ? 'base64' : 'url',
+      imageUrlLength: productData.imageUrl?.length
     });
+
+    try {
+      const response = await this.request('/products', {
+        method: 'POST',
+        body: JSON.stringify(productData),
+      });
+
+      console.log('✅ Product created successfully:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to create product:', error);
+      throw error;
+    }
   }
 
   async updateProduct(id, productData) {

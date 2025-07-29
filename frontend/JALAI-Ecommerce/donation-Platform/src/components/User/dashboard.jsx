@@ -98,7 +98,10 @@ export default function UserDashboard() {
       // Fetch categories
       const categoriesResponse = await apiService.getCategories()
       if (categoriesResponse && Array.isArray(categoriesResponse)) {
+        console.log('📋 Categories loaded:', categoriesResponse.map(c => ({ id: c.id, name: c.name })))
         setCategories(categoriesResponse)
+      } else {
+        console.warn('⚠️ No categories received from API')
       }
 
       // Fetch user data
@@ -227,19 +230,72 @@ export default function UserDashboard() {
   // Handler functions
   const handlePhotoUpload = (event) => {
     const files = Array.from(event.target.files)
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const newPhoto = {
-          id: Date.now() + Math.random(),
-          name: file.name,
-          url: e.target.result,
-          file: file,
-        }
-        setPhotos((prev) => [...prev, newPhoto])
+
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/')
+      const isValidSize = file.size <= 5 * 1024 * 1024 // 5MB limit
+
+      if (!isValidType) {
+        alert(`${file.name} is not a valid image file. Please upload JPG, PNG, or other image formats.`)
+        return false
       }
+
+      if (!isValidSize) {
+        alert(`${file.name} is too large. Please upload images smaller than 5MB.`)
+        return false
+      }
+
+      return true
+    })
+
+    validFiles.forEach((file) => {
+      const reader = new FileReader()
+
+      reader.onload = (e) => {
+        try {
+          const result = e.target.result
+
+          // Validate that we got a proper base64 data URL
+          if (!result || !result.startsWith('data:image/')) {
+            console.error('❌ Failed to read image file:', file.name)
+            alert(`Failed to process image: ${file.name}. Please try a different image.`)
+            return
+          }
+
+          const newPhoto = {
+            id: Date.now() + Math.random(),
+            name: file.name,
+            url: result, // This is the base64 data URL
+            file: file,
+            size: file.size,
+            type: file.type
+          }
+
+          console.log('📸 Photo uploaded successfully:', {
+            name: newPhoto.name,
+            size: `${(newPhoto.size / 1024).toFixed(1)}KB`,
+            type: newPhoto.type,
+            hasValidUrl: newPhoto.url.startsWith('data:image/')
+          })
+
+          setPhotos((prev) => [...prev, newPhoto])
+        } catch (error) {
+          console.error('❌ Error processing image:', error)
+          alert(`Failed to process image: ${file.name}. Please try again.`)
+        }
+      }
+
+      reader.onerror = (error) => {
+        console.error('❌ FileReader error:', error)
+        alert(`Failed to read image: ${file.name}. Please try again.`)
+      }
+
       reader.readAsDataURL(file)
     })
+
+    // Clear the input so the same file can be uploaded again if needed
+    event.target.value = ''
   }
 
   const deletePhoto = (photoId) => {
@@ -260,8 +316,24 @@ export default function UserDashboard() {
   }
 
   const handleSubmitItem = async () => {
-    if (!formData.name || !formData.price || !formData.description) {
-      alert("Please fill in all required fields")
+    // Validate required fields
+    if (!formData.name?.trim()) {
+      alert("Please enter an item name")
+      return
+    }
+
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      alert("Please enter a valid price greater than 0")
+      return
+    }
+
+    if (!formData.description?.trim()) {
+      alert("Please enter an item description")
+      return
+    }
+
+    if (!formData.category) {
+      alert("Please select a category")
       return
     }
 
@@ -273,14 +345,33 @@ export default function UserDashboard() {
     try {
       const selectedPhoto = photos.find((photo) => photo.id === formData.selectedPhotos[0])
 
+      // Validate that we have a photo with base64 data
+      if (!selectedPhoto || !selectedPhoto.url) {
+        alert("Please select a valid photo")
+        return
+      }
+
+      console.log("📸 Selected photo data:", {
+        id: selectedPhoto.id,
+        name: selectedPhoto.name,
+        hasUrl: !!selectedPhoto.url,
+        hasFile: !!selectedPhoto.file,
+        urlType: selectedPhoto.url?.startsWith('data:') ? 'base64' : 'other'
+      })
+
       const itemData = {
         name: formData.name,
         price: parseFloat(formData.price),
         description: formData.description,
         categoryId: formData.category,
         sellerId: user.id, // Backend expects sellerId, not clientId
-        imageUrl: selectedPhoto?.file ? URL.createObjectURL(selectedPhoto.file) : null,
+        imageUrl: selectedPhoto.url, // Use the base64 data URL directly
       }
+
+      console.log("🚀 Submitting item data:", {
+        ...itemData,
+        imageUrl: itemData.imageUrl ? `${itemData.imageUrl.substring(0, 50)}...` : null
+      })
 
       const response = await apiService.createProduct(itemData)
 
@@ -294,11 +385,20 @@ export default function UserDashboard() {
           condition: "",
           selectedPhotos: [],
         })
+        setPhotos([]) // Clear uploaded photos
         await refreshAllUserData()
       }
     } catch (error) {
-      console.error("Error creating product:", error)
-      alert("Failed to list item. Please try again.")
+      console.error("❌ Error creating product:", error)
+
+      // More detailed error handling
+      if (error.message?.includes('Failed to load image data')) {
+        alert("Image upload failed. Please try uploading a different image or check your internet connection.")
+      } else if (error.message?.includes('Network')) {
+        alert("Network error. Please check your internet connection and try again.")
+      } else {
+        alert(`Failed to list item: ${error.message || 'Unknown error'}. Please try again.`)
+      }
     }
   }
 
