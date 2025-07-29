@@ -202,17 +202,24 @@ class ApiService {
   // Authentication methods
   async login(email, password) {
     try {
-      console.log('🔧 Attempting login to:', `${this.baseURL}/auth/login`);
-      console.log('🔧 Login credentials:', { email, password: '***' });
+      // Only log in debug mode
+      const debugMode = localStorage.getItem('debugAuth') === 'true';
+
+      if (debugMode) {
+        console.log('🔧 Attempting login to:', `${this.baseURL}/auth/login`);
+        console.log('🔧 Login credentials:', { email, password: '***' });
+      }
 
       const response = await this.request('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
-      console.log('🔧 API login response:', response); // Debug log
-      console.log('🔧 Response type:', typeof response);
-      console.log('🔧 Response keys:', response ? Object.keys(response) : 'null');
+      if (debugMode) {
+        console.log('🔧 API login response:', response);
+        console.log('🔧 Response type:', typeof response);
+        console.log('🔧 Response keys:', response ? Object.keys(response) : 'null');
+      }
 
       if (response && response.accessToken) {
         console.log('🟢 Login successful - setting token');

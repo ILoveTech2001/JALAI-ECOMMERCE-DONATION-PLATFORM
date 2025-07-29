@@ -33,6 +33,7 @@ import {
 import './AdminMobile.css';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/apiService';
+import cacheService from '../../services/cacheService';
 
 // Import management components
 import ClientsManagement from './ClientsManagement';
@@ -65,22 +66,23 @@ const AdminDashboard = () => {
 
   // Check admin authentication using global auth context
   useEffect(() => {
-    console.log('🔍 AdminDashboard auth check:', {
-      authLoading,
-      hasUser: !!user,
-      userType: user?.userType,
-      userName: user?.name
-    });
+    // Only log in debug mode
+    if (localStorage.getItem('debugAuth') === 'true') {
+      console.log('🔍 AdminDashboard auth check:', {
+        authLoading,
+        hasUser: !!user,
+        userType: user?.userType,
+        userName: user?.name
+      });
+    }
 
     if (!authLoading) {
       if (!user) {
-        console.log('❌ No user found, redirecting to login');
         navigate('/login', { replace: true });
         return;
       }
 
       if (user.userType !== 'ADMIN') {
-        console.log('❌ User is not admin, redirecting based on type:', user.userType);
         // Not an admin user, redirect to appropriate dashboard
         if (user.userType === 'ORPHANAGE') {
           navigate('/orphanage-dashboard', { replace: true });
@@ -90,12 +92,14 @@ const AdminDashboard = () => {
         return;
       }
 
-      // User is admin, continue with dashboard
-      console.log('✅ Admin user authenticated successfully:', {
-        name: user.name,
-        email: user.email,
-        userType: user.userType
-      });
+      // User is admin, continue with dashboard - only log in debug mode
+      if (localStorage.getItem('debugAuth') === 'true') {
+        console.log('✅ Admin user authenticated successfully:', {
+          name: user.name,
+          email: user.email,
+          userType: user.userType
+        });
+      }
     }
   }, [user, authLoading, navigate]);
 
@@ -127,26 +131,31 @@ const AdminDashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
 
-  // Fetch dashboard stats with error handling and rate limiting
+  // Fetch dashboard stats with caching and error handling
   useEffect(() => {
     const fetchDashboardStats = async () => {
+      // First try to get cached data
+      const cachedStats = cacheService.get('dashboardStats');
+      if (cachedStats) {
+        setDashboardStats(cachedStats);
+        setLoading(false);
+        return;
+      }
+
       // Prevent API spam - only call once every 10 seconds
       const now = Date.now();
       if (now - lastApiCallTime < 10000) {
-        console.log('⏳ Skipping API call - too soon since last call');
         return;
       }
 
       // Don't make calls if API is disabled due to errors
       if (apiCallsDisabled) {
-        console.log('🚫 API calls disabled due to previous errors');
         return;
       }
 
       try {
         setLoading(true);
         setLastApiCallTime(now);
-        console.log('📊 Fetching dashboard stats...');
         const stats = await apiService.getDashboardStats();
 
         // Transform API data to match the expected format
@@ -195,6 +204,8 @@ const AdminDashboard = () => {
           }
         ];
 
+        // Cache the transformed stats for 10 minutes
+        cacheService.set('dashboardStats', transformedStats, 600000);
         setDashboardStats(transformedStats);
       } catch (error) {
         console.error('❌ Failed to fetch dashboard stats:', error);
@@ -215,51 +226,36 @@ const AdminDashboard = () => {
           setError('Failed to load dashboard statistics');
         }
 
-        // Fallback to dummy data if API fails
-        setDashboardStats([
-          {
-            title: 'Total Clients',
-            value: '1,234',
-            change: '+12%',
-            icon: Users,
-            color: 'bg-blue-500'
-          },
-          {
-            title: 'Total Products',
-            value: '567',
-            change: '+8%',
-            icon: Package,
-            color: 'bg-green-500'
-          },
-          {
-            title: 'Total Orders',
-            value: '890',
-            change: '+15%',
-            icon: ShoppingBag,
-            color: 'bg-purple-500'
-          },
-          {
-            title: 'Total Orphanages',
-            value: '45',
-            change: '+5%',
-            icon: Building2,
-            color: 'bg-orange-500'
-          },
-          {
-            title: 'Total Donations',
-            value: '234',
-            change: '+20%',
-            icon: Heart,
-            color: 'bg-red-500'
-          },
-          {
-            title: 'Total Revenue',
-            value: '2,450,000 XAF',
-            change: '+18%',
-            icon: CreditCard,
-            color: 'bg-indigo-500'
-          }
-        ]);
+        // Try to use any cached data as fallback
+        const fallbackStats = cacheService.get('dashboardStats');
+        if (fallbackStats) {
+          setDashboardStats(fallbackStats);
+        } else {
+          // Only show minimal placeholder if no cache exists
+          setDashboardStats([
+            {
+              title: 'Total Clients',
+              value: 'Loading...',
+              change: '',
+              icon: Users,
+              color: 'bg-gray-400'
+            },
+            {
+              title: 'Total Products',
+              value: 'Loading...',
+              change: '',
+              icon: Package,
+              color: 'bg-gray-400'
+            },
+            {
+              title: 'Total Orders',
+              value: 'Loading...',
+              change: '',
+              icon: ShoppingBag,
+              color: 'bg-gray-400'
+            }
+          ]);
+        }
       } finally {
         setLoading(false);
       }
@@ -272,14 +268,20 @@ const AdminDashboard = () => {
   }, [user]);
 
   const fetchNotifications = async () => {
+    // First try cached notifications
+    const cachedNotifications = cacheService.get('adminNotifications');
+    if (cachedNotifications) {
+      setNotifications(cachedNotifications.notifications);
+      setUnreadCount(cachedNotifications.unreadCount);
+      return;
+    }
+
     // Don't make calls if API is disabled due to errors
     if (apiCallsDisabled) {
-      console.log('🚫 Notifications API disabled due to previous errors');
       return;
     }
 
     try {
-      console.log('🔔 Fetching notifications...');
       // For admin, get system/admin notifications only (not client notifications)
       const allNotifications = await apiService.getAllNotifications();
 
@@ -296,6 +298,12 @@ const AdminDashboard = () => {
       // Count unread notifications
       const unread = adminNotifications.filter(n => !n.isRead).length;
       setUnreadCount(unread);
+
+      // Cache notifications for 5 minutes
+      cacheService.set('adminNotifications', {
+        notifications: adminNotifications,
+        unreadCount: unread
+      }, 300000);
     } catch (error) {
       console.error('❌ Failed to fetch notifications:', error);
 
@@ -320,14 +328,17 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // Refresh notifications every 2 minutes to avoid overwhelming backend
+  // Refresh notifications every 5 minutes to avoid overwhelming backend
   useEffect(() => {
     const interval = setInterval(() => {
       if (user && user.userType === 'ADMIN' && !apiCallsDisabled) {
-        console.log('🔄 Auto-refreshing notifications...');
+        // Only log in debug mode
+        if (localStorage.getItem('debugAuth') === 'true') {
+          console.log('🔄 Auto-refreshing notifications...');
+        }
         fetchNotifications();
       }
-    }, 120000); // 2 minutes instead of 30 seconds
+    }, 300000); // 5 minutes instead of 2 minutes
 
     return () => clearInterval(interval);
   }, [user, apiCallsDisabled]);

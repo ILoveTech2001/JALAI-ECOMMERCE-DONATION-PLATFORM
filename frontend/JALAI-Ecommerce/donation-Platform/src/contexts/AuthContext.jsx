@@ -21,11 +21,14 @@ export const AuthProvider = ({ children }) => {
     const fromUser = userState;
     const toUser = newUser;
 
-    console.log('🔄 AuthContext: setUser called', {
-      from: fromUser ? `${fromUser.userType} (${fromUser.name})` : 'null',
-      to: toUser ? `${toUser.userType} (${toUser.name})` : 'null',
-      timestamp: new Date().toISOString()
-    });
+    // Only log in debug mode
+    if (localStorage.getItem('debugAuth') === 'true') {
+      console.log('🔄 AuthContext: setUser called', {
+        from: fromUser ? `${fromUser.userType} (${fromUser.name})` : 'null',
+        to: toUser ? `${toUser.userType} (${toUser.name})` : 'null',
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Special alert for when user goes from authenticated to null
     if (fromUser && !toUser) {
@@ -110,15 +113,17 @@ export const AuthProvider = ({ children }) => {
         if (token && userData) {
           try {
             const parsedUser = JSON.parse(userData);
-            console.log('🔄 AuthContext: Restoring user from localStorage:', {
-              userType: parsedUser.userType,
-              name: parsedUser.name,
-              email: parsedUser.email
-            });
+            // Only log in debug mode
+            if (localStorage.getItem('debugAuth') === 'true') {
+              console.log('🔄 AuthContext: Restoring user from localStorage:', {
+                userType: parsedUser.userType,
+                name: parsedUser.name,
+                email: parsedUser.email
+              });
+            }
             persistentLog('Restoring user from localStorage', parsedUser);
             setUser(parsedUser);
             apiService.setToken(token);
-            console.log('✅ AuthContext: User restored successfully');
           } catch (parseError) {
             console.error('❌ AuthContext: Error parsing userData:', parseError);
             persistentLog('Error parsing userData - clearing corrupted data', parseError);
@@ -178,9 +183,13 @@ export const AuthProvider = ({ children }) => {
       persistentLog('Login attempt started', { email });
 
       const response = await apiService.login(email, password);
-      console.log('🔧 AuthContext: Raw login response:', response);
-      console.log('🔧 AuthContext: Response type:', typeof response);
-      console.log('🔧 AuthContext: Response keys:', response ? Object.keys(response) : null);
+
+      // Only log in debug mode
+      if (localStorage.getItem('debugAuth') === 'true') {
+        console.log('🔧 AuthContext: Raw login response:', response);
+        console.log('🔧 AuthContext: Response type:', typeof response);
+        console.log('🔧 AuthContext: Response keys:', response ? Object.keys(response) : null);
+      }
 
       if (localStorage.getItem('debugAuth') === 'true') {
         persistentLog('Login response received', {
