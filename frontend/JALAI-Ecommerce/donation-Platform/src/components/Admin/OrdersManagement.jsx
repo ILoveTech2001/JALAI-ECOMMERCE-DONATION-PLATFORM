@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  ShoppingBag, 
-  Search, 
-  Filter, 
-  Eye, 
+import React, { useState, useEffect } from 'react';
+import {
+  ShoppingBag,
+  Search,
+  Filter,
+  Eye,
   Download,
   Calendar,
   User,
@@ -13,81 +13,86 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import apiService from '../../services/apiService';
+import cacheService from '../../services/cacheService';
 
 const OrdersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dummy orders data based on the class diagram
-  const [orders, setOrders] = useState([
-    {
-      orderId: 'ORD-001',
-      status: 'delivered',
-      deliveryDate: '2024-01-20',
-      userId: 1,
-      userName: 'John Doe',
-      userEmail: 'john.doe@example.com',
-      sellerId: 101,
-      items: [
-        { productId: 1, productName: 'Green Gown', quantity: 2, price: 8000 },
-        { productId: 2, productName: 'Classic Dress', quantity: 1, price: 12000 }
-      ],
-      totalAmount: 28000,
-      orderDate: '2024-01-15',
-      shippingAddress: 'Douala, Cameroon',
-      paymentStatus: 'paid'
-    },
-    {
-      orderId: 'ORD-002',
-      status: 'pending',
-      deliveryDate: null,
-      userId: 2,
-      userName: 'Jane Smith',
-      userEmail: 'jane.smith@example.com',
-      sellerId: 102,
-      items: [
-        { productId: 3, productName: 'Summer Wear', quantity: 3, price: 6500 }
-      ],
-      totalAmount: 19500,
-      orderDate: '2024-01-18',
-      shippingAddress: 'Yaoundé, Cameroon',
-      paymentStatus: 'pending'
-    },
-    {
-      orderId: 'ORD-003',
-      status: 'shipped',
-      deliveryDate: '2024-01-22',
-      userId: 3,
-      userName: 'Alice Johnson',
-      userEmail: 'alice.johnson@example.com',
-      sellerId: 103,
-      items: [
-        { productId: 4, productName: 'Elegant Outfit', quantity: 1, price: 15000 },
-        { productId: 5, productName: 'Dining Table Set', quantity: 1, price: 85000 }
-      ],
-      totalAmount: 100000,
-      orderDate: '2024-01-16',
-      shippingAddress: 'Bamenda, Cameroon',
-      paymentStatus: 'paid'
-    },
-    {
-      orderId: 'ORD-004',
-      status: 'cancelled',
-      deliveryDate: null,
-      userId: 4,
-      userName: 'Bob Wilson',
-      userEmail: 'bob.wilson@example.com',
-      sellerId: 104,
-      items: [
-        { productId: 6, productName: 'Kitchen Utensils Set', quantity: 2, price: 25000 }
-      ],
-      totalAmount: 50000,
-      orderDate: '2024-01-12',
-      shippingAddress: 'Garoua, Cameroon',
-      paymentStatus: 'refunded'
+  // Fetch orders from backend
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching orders from API...');
+      const response = await apiService.getAllOrders();
+      console.log('📦 Orders API response:', response);
+
+      // Check if response is an array and has data
+      if (!Array.isArray(response)) {
+        console.warn('⚠️ Orders API returned non-array:', response);
+        setOrders([]);
+        setError('Invalid data format received from server');
+        return;
+      }
+
+      if (response.length === 0) {
+        console.log('📭 No orders found in database');
+        setOrders([]);
+        setError(null);
+        return;
+      }
+
+      // Transform backend data to match frontend expectations
+      const transformedOrders = response.map(order => ({
+        orderId: order.id,
+        status: order.status?.toLowerCase() || 'pending',
+        deliveryDate: order.deliveryDate ? new Date(order.deliveryDate).toISOString().split('T')[0] : null,
+        userId: order.client?.id,
+        userName: order.client?.name || 'Unknown User',
+        userEmail: order.client?.email || 'No email',
+        sellerId: order.seller?.id,
+        items: order.orderItems?.map(item => ({
+          productId: item.product?.id,
+          productName: item.product?.name || 'Unknown Product',
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        })) || [],
+        totalAmount: order.totalAmount || 0,
+        orderDate: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : 'Unknown',
+        shippingAddress: order.shippingAddress || 'No address provided',
+        paymentStatus: order.paymentStatus?.toLowerCase() || 'pending'
+      }));
+
+      console.log('✅ Transformed orders:', transformedOrders);
+
+      // Cache orders for 5 minutes
+      cacheService.set('adminOrders', transformedOrders, 300000);
+      setOrders(transformedOrders);
+      setError(null);
+    } catch (error) {
+      console.error('❌ Error fetching orders:', error);
+      setError(`Failed to load orders: ${error.message}`);
+
+      // Always show empty state on error to avoid dummy data
+      setOrders([]);
+
+      // Clear any cached dummy data
+      cacheService.clear('adminOrders');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+
 
   const statusOptions = ['all', 'pending', 'shipped', 'delivered', 'cancelled'];
 
@@ -279,9 +284,35 @@ const OrdersManagement = () => {
         )}
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <p className="text-red-600 text-sm">{error}</p>
+            <button
+              onClick={fetchOrders}
+              className="ml-4 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Orders Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading orders...</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="p-8 text-center">
+            <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">No orders found</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
@@ -396,7 +427,8 @@ const OrdersManagement = () => {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">

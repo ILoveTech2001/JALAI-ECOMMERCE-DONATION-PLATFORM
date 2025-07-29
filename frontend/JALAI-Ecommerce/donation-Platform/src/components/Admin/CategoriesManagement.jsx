@@ -10,6 +10,7 @@ import {
   Tag
 } from 'lucide-react';
 import apiService from '../../services/apiService';
+import cacheService from '../../services/cacheService';
 
 const CategoriesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +42,15 @@ const CategoriesManagement = () => {
 
   const fetchCategories = async () => {
     try {
+      // First try cached data
+      const cachedCategories = cacheService.get('adminCategories');
+      if (cachedCategories) {
+        setCategories(cachedCategories);
+        setLoading(false);
+        setFetchAttempts(0); // Reset attempts on cache hit
+        return;
+      }
+
       setLoading(true);
       setFetchAttempts(prev => prev + 1);
 
@@ -56,6 +66,8 @@ const CategoriesManagement = () => {
         status: category.isActive ? 'active' : 'inactive'
       }));
 
+      // Cache categories for 10 minutes
+      cacheService.set('adminCategories', transformedCategories, 600000);
       setCategories(transformedCategories);
       setError(null);
       setFetchAttempts(0); // Reset attempts on success

@@ -9,20 +9,12 @@ import {
   Heart,
   Building2,
   Grid3X3,
-  MessageSquare,
   Settings,
   User,
   Moon,
   Sun,
   Menu,
-  X,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
   Search,
-  Filter,
-  Download,
   Bell,
   CheckCircle,
   XCircle,
@@ -40,7 +32,7 @@ import ClientsManagement from './ClientsManagement';
 import ProductsManagement from './ProductsManagement';
 import OrdersManagement from './OrdersManagement';
 import OrphanagesManagement from './OrphanagesManagement';
-// import DonationsManagement from './DonationsManagement';
+import DonationsManagement from './DonationsManagement';
 import ReviewsManagement from './ReviewsManagement';
 import PaymentsManagement from './PaymentsManagement';
 import CategoriesManagement from './CategoriesManagement';
@@ -66,16 +58,6 @@ const AdminDashboard = () => {
 
   // Check admin authentication using global auth context
   useEffect(() => {
-    // Only log in debug mode
-    if (localStorage.getItem('debugAuth') === 'true') {
-      console.log('🔍 AdminDashboard auth check:', {
-        authLoading,
-        hasUser: !!user,
-        userType: user?.userType,
-        userName: user?.name
-      });
-    }
-
     if (!authLoading) {
       if (!user) {
         navigate('/login', { replace: true });
@@ -90,15 +72,6 @@ const AdminDashboard = () => {
           navigate('/user-dashboard', { replace: true });
         }
         return;
-      }
-
-      // User is admin, continue with dashboard - only log in debug mode
-      if (localStorage.getItem('debugAuth') === 'true') {
-        console.log('✅ Admin user authenticated successfully:', {
-          name: user.name,
-          email: user.email,
-          userType: user.userType
-        });
       }
     }
   }, [user, authLoading, navigate]);
@@ -230,31 +203,6 @@ const AdminDashboard = () => {
         const fallbackStats = cacheService.get('dashboardStats');
         if (fallbackStats) {
           setDashboardStats(fallbackStats);
-        } else {
-          // Only show minimal placeholder if no cache exists
-          setDashboardStats([
-            {
-              title: 'Total Clients',
-              value: 'Loading...',
-              change: '',
-              icon: Users,
-              color: 'bg-gray-400'
-            },
-            {
-              title: 'Total Products',
-              value: 'Loading...',
-              change: '',
-              icon: Package,
-              color: 'bg-gray-400'
-            },
-            {
-              title: 'Total Orders',
-              value: 'Loading...',
-              change: '',
-              icon: ShoppingBag,
-              color: 'bg-gray-400'
-            }
-          ]);
         }
       } finally {
         setLoading(false);
@@ -265,7 +213,7 @@ const AdminDashboard = () => {
       fetchDashboardStats();
       fetchNotifications();
     }
-  }, [user]);
+  }, [user, apiCallsDisabled, lastApiCallTime]);
 
   const fetchNotifications = async () => {
     // First try cached notifications
@@ -286,11 +234,10 @@ const AdminDashboard = () => {
       const allNotifications = await apiService.getAllNotifications();
 
       // Filter to show only admin-relevant notifications
-      // (system alerts, general announcements, not individual client product notifications)
       const adminNotifications = allNotifications.filter(notification => {
         return notification.type === 'SYSTEM_ALERT' ||
                notification.type === 'GENERAL_ANNOUNCEMENT' ||
-               notification.recipientAdminId !== null; // Notifications specifically for admins
+               notification.recipientAdminId !== null;
       });
 
       setNotifications(adminNotifications);
@@ -306,15 +253,6 @@ const AdminDashboard = () => {
       }, 300000);
     } catch (error) {
       console.error('❌ Failed to fetch notifications:', error);
-
-      // Check if it's a resource error (backend overwhelmed)
-      if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES') ||
-          error.message?.includes('Network error')) {
-        console.warn('🚫 Disabling notifications API due to backend issues');
-        // Don't disable all API calls, just skip notifications for now
-      }
-
-      // Set empty array as fallback
       setNotifications([]);
       setUnreadCount(0);
     }
@@ -332,13 +270,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (user && user.userType === 'ADMIN' && !apiCallsDisabled) {
-        // Only log in debug mode
-        if (localStorage.getItem('debugAuth') === 'true') {
-          console.log('🔄 Auto-refreshing notifications...');
-        }
         fetchNotifications();
       }
-    }, 300000); // 5 minutes instead of 2 minutes
+    }, 300000); // 5 minutes
 
     return () => clearInterval(interval);
   }, [user, apiCallsDisabled]);
@@ -365,12 +299,29 @@ const AdminDashboard = () => {
   ];
 
   // Show loading while checking admin authentication
-  if (authLoading || !user || user.userType !== 'ADMIN') {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Loading...</h2>
           <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.userType !== 'ADMIN') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600">Admin access required</p>
+          <button 
+            onClick={() => navigate('/login')}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
@@ -579,7 +530,6 @@ const AdminDashboard = () => {
                         navigate('/login', { replace: true });
                       } catch (error) {
                         console.error('Logout error:', error);
-                        // Force logout even if API call fails
                         navigate('/login', { replace: true });
                       }
                     }}
@@ -606,7 +556,73 @@ const AdminDashboard = () => {
                           setError(null);
                           setApiCallsDisabled(false);
                           setLastApiCallTime(0);
+
+                          // Clear all admin-related cache
+                          cacheService.clear('dashboardStats');
+                          cacheService.clear('adminOrders');
+                          cacheService.clear('adminDonations');
+                          cacheService.clear('adminReviews');
+                          cacheService.clear('adminPayments');
+                          cacheService.clear('adminNotifications');
+
                           if (user && user.userType === 'ADMIN') {
+                            // Refetch data
+                            const fetchDashboardStats = async () => {
+                              try {
+                                setLoading(true);
+                                const stats = await apiService.getDashboardStats();
+                                const transformedStats = [
+                                  {
+                                    title: 'Total Clients',
+                                    value: stats.totalClients || 0,
+                                    change: '+12%',
+                                    icon: Users,
+                                    color: 'bg-blue-500'
+                                  },
+                                  {
+                                    title: 'Total Products',
+                                    value: stats.totalProducts || 0,
+                                    change: '+8%',
+                                    icon: Package,
+                                    color: 'bg-green-500'
+                                  },
+                                  {
+                                    title: 'Total Orders',
+                                    value: stats.totalOrders || 0,
+                                    change: '+15%',
+                                    icon: ShoppingBag,
+                                    color: 'bg-purple-500'
+                                  },
+                                  {
+                                    title: 'Total Orphanages',
+                                    value: stats.totalOrphanages || 0,
+                                    change: '+5%',
+                                    icon: Building2,
+                                    color: 'bg-orange-500'
+                                  },
+                                  {
+                                    title: 'Total Donations',
+                                    value: stats.totalDonations || 0,
+                                    change: '+20%',
+                                    icon: Heart,
+                                    color: 'bg-red-500'
+                                  },
+                                  {
+                                    title: 'Total Revenue',
+                                    value: `${(stats.totalRevenue || 0).toLocaleString()} XAF`,
+                                    change: '+18%',
+                                    icon: CreditCard,
+                                    color: 'bg-indigo-500'
+                                  }
+                                ];
+                                cacheService.set('dashboardStats', transformedStats, 600000);
+                                setDashboardStats(transformedStats);
+                              } catch (error) {
+                                console.error('Retry failed:', error);
+                              } finally {
+                                setLoading(false);
+                              }
+                            };
                             fetchDashboardStats();
                             fetchNotifications();
                           }
@@ -700,7 +716,7 @@ const AdminDashboard = () => {
             {activeTab === 'products' && <ProductsManagement />}
             {activeTab === 'orders' && <OrdersManagement />}
             {activeTab === 'orphanages' && <OrphanagesManagement />}
-            {activeTab === 'donations' && <div className="p-6 text-center text-gray-500">Donations Management - Coming Soon</div>}
+            {activeTab === 'donations' && <DonationsManagement />}
             {activeTab === 'reviews' && <ReviewsManagement />}
             {activeTab === 'payments' && <PaymentsManagement />}
             {activeTab === 'categories' && <CategoriesManagement />}

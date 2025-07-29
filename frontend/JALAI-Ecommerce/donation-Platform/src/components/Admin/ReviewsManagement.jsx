@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { 
-  Star, 
-  Search, 
-  Filter, 
-  Eye, 
-  Trash2, 
+import React, { useState, useEffect } from 'react';
+import {
+  Star,
+  Search,
+  Filter,
+  Eye,
+  Trash2,
   Download,
   User,
   Package,
@@ -14,82 +14,63 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import apiService from '../../services/apiService';
+import cacheService from '../../services/cacheService';
 
 const ReviewsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRating, setFilterRating] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedReviews, setSelectedReviews] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dummy reviews data based on the class diagram
-  const [reviews, setReviews] = useState([
-    {
-      reviewId: 1,
-      clientId: 1,
-      clientName: 'John Doe',
-      productId: 1,
-      productName: 'Green Gown',
-      rating: 5,
-      comment: 'Excellent quality dress! My daughter loves it. Fast delivery and great customer service.',
-      date: '2024-01-20',
-      status: 'approved'
-    },
-    {
-      reviewId: 2,
-      clientId: 2,
-      clientName: 'Jane Smith',
-      productId: 2,
-      productName: 'Classic Dress',
-      rating: 4,
-      comment: 'Good quality but the size was a bit smaller than expected. Overall satisfied with the purchase.',
-      date: '2024-01-18',
-      status: 'pending'
-    },
-    {
-      reviewId: 3,
-      clientId: 3,
-      clientName: 'Alice Johnson',
-      productId: 3,
-      productName: 'Summer Wear',
-      rating: 3,
-      comment: 'Average quality. The fabric is okay but not as described. Delivery was on time.',
-      date: '2024-01-15',
-      status: 'approved'
-    },
-    {
-      reviewId: 4,
-      clientId: 4,
-      clientName: 'Bob Wilson',
-      productId: 4,
-      productName: 'Elegant Outfit',
-      rating: 1,
-      comment: 'Very poor quality! The product arrived damaged and customer service was unhelpful.',
-      date: '2024-01-12',
-      status: 'rejected'
-    },
-    {
-      reviewId: 5,
-      clientId: 1,
-      clientName: 'John Doe',
-      productId: 5,
-      productName: 'Dining Table Set',
-      rating: 5,
-      comment: 'Amazing furniture! Excellent craftsmanship and very sturdy. Highly recommended!',
-      date: '2024-01-22',
-      status: 'approved'
-    },
-    {
-      reviewId: 6,
-      clientId: 2,
-      clientName: 'Jane Smith',
-      productId: 6,
-      productName: 'Kitchen Utensils Set',
-      rating: 4,
-      comment: 'Good value for money. All utensils are functional and well-made.',
-      date: '2024-01-19',
-      status: 'pending'
+  // Fetch reviews from backend
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching reviews from API...');
+      // Note: This endpoint might not exist yet, so we'll handle the error gracefully
+      const response = await apiService.getAllReviews();
+      console.log('⭐ Reviews API response:', response);
+
+      // Transform backend data to match frontend expectations
+      const transformedReviews = response.map(review => ({
+        reviewId: review.id,
+        clientId: review.client?.id,
+        clientName: review.client?.name || 'Anonymous',
+        productId: review.product?.id,
+        productName: review.product?.name || 'Unknown Product',
+        rating: review.rating || 0,
+        comment: review.comment || '',
+        date: review.createdAt ? new Date(review.createdAt).toISOString().split('T')[0] : 'Unknown',
+        status: review.status?.toLowerCase() || 'pending'
+      }));
+
+      // Cache reviews for 5 minutes
+      cacheService.set('adminReviews', transformedReviews, 300000);
+      setReviews(transformedReviews);
+      setError(null);
+    } catch (error) {
+      console.error('❌ Error fetching reviews:', error);
+      setError(`Failed to load reviews: ${error.message}`);
+
+      // Always show empty state on error to avoid dummy data
+      setReviews([]);
+
+      // Clear any cached dummy data
+      cacheService.clear('adminReviews');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+
 
   const ratingOptions = ['all', '5', '4', '3', '2', '1'];
   const statusOptions = ['all', 'pending', 'approved', 'rejected'];

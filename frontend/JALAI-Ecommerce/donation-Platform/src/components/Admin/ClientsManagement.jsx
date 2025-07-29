@@ -51,64 +51,11 @@ const ClientsManagement = () => {
           setClients(response);
         }
       } catch (error) {
-        console.error('Failed to fetch clients:', error);
-        setError('Failed to load clients');
+        console.error('❌ Failed to fetch clients:', error);
+        setError(`Failed to load clients: ${error.message}`);
 
-        // Fallback to dummy data if API fails
-        setClients([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+237 123 456 789',
-      location: 'Douala, Cameroon',
-      password: '********',
-      joinDate: '2024-01-15',
-      totalOrders: 12,
-      totalSpent: 45000,
-      status: 'active',
-      lastLogin: '2024-01-20'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      phone: '+237 987 654 321',
-      location: 'Yaoundé, Cameroon',
-      password: '********',
-      joinDate: '2024-01-10',
-      totalOrders: 8,
-      totalSpent: 32000,
-      status: 'active',
-      lastLogin: '2024-01-19'
-    },
-    {
-      id: 3,
-      name: 'Alice Johnson',
-      email: 'alice.johnson@example.com',
-      phone: '+237 555 123 456',
-      location: 'Bamenda, Cameroon',
-      password: '********',
-      joinDate: '2024-01-05',
-      totalOrders: 15,
-      totalSpent: 67000,
-      status: 'inactive',
-      lastLogin: '2024-01-15'
-    },
-    {
-      id: 4,
-      name: 'Bob Wilson',
-      email: 'bob.wilson@example.com',
-      phone: '+237 444 789 123',
-      location: 'Garoua, Cameroon',
-      password: '********',
-      joinDate: '2023-12-20',
-      totalOrders: 25,
-      totalSpent: 89000,
-      status: 'active',
-      lastLogin: '2024-01-21'
-    }
-        ]);
+        // Always show empty state on error to avoid dummy data
+        setClients([]);
       } finally {
         setLoading(false);
       }

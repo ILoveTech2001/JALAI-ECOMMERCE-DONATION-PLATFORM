@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  CreditCard, 
-  Search, 
-  Filter, 
-  Eye, 
+import React, { useState, useEffect } from 'react';
+import {
+  CreditCard,
+  Search,
+  Filter,
+  Eye,
   Download,
   Calendar,
   User,
@@ -13,70 +13,62 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
+import apiService from '../../services/apiService';
+import cacheService from '../../services/cacheService';
 
 const PaymentsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterMethod, setFilterMethod] = useState('all');
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dummy payments data based on the class diagram
-  const [payments] = useState([
-    {
-      paymentId: 'PAY-001',
-      customerId: 1,
-      customerName: 'John Doe',
-      paymentMethod: 'Mobile Money',
-      paymentDate: '2024-01-20',
-      status: 'completed',
-      amount: 28000,
-      orderId: 'ORD-001',
-      transactionId: 'TXN-MM-001'
-    },
-    {
-      paymentId: 'PAY-002',
-      customerId: 2,
-      customerName: 'Jane Smith',
-      paymentMethod: 'Bank Transfer',
-      paymentDate: '2024-01-18',
-      status: 'pending',
-      amount: 19500,
-      orderId: 'ORD-002',
-      transactionId: 'TXN-BT-002'
-    },
-    {
-      paymentId: 'PAY-003',
-      customerId: 3,
-      customerName: 'Alice Johnson',
-      paymentMethod: 'Credit Card',
-      paymentDate: '2024-01-16',
-      status: 'completed',
-      amount: 100000,
-      orderId: 'ORD-003',
-      transactionId: 'TXN-CC-003'
-    },
-    {
-      paymentId: 'PAY-004',
-      customerId: 4,
-      customerName: 'Bob Wilson',
-      paymentMethod: 'Mobile Money',
-      paymentDate: '2024-01-12',
-      status: 'failed',
-      amount: 50000,
-      orderId: 'ORD-004',
-      transactionId: 'TXN-MM-004'
-    },
-    {
-      paymentId: 'PAY-005',
-      customerId: 1,
-      customerName: 'John Doe',
-      paymentMethod: 'Bank Transfer',
-      paymentDate: '2024-01-23',
-      status: 'refunded',
-      amount: 30000,
-      orderId: 'ORD-005',
-      transactionId: 'TXN-BT-005'
+  // Fetch payments from backend
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching payments from API...');
+      // Note: This endpoint might not exist yet, so we'll handle the error gracefully
+      const response = await apiService.getAllPayments();
+      console.log('💳 Payments API response:', response);
+
+      // Transform backend data to match frontend expectations
+      const transformedPayments = response.map(payment => ({
+        paymentId: payment.id,
+        customerId: payment.client?.id,
+        customerName: payment.client?.name || 'Unknown Customer',
+        paymentMethod: payment.paymentMethod || 'Unknown',
+        paymentDate: payment.createdAt ? new Date(payment.createdAt).toISOString().split('T')[0] : 'Unknown',
+        status: payment.status?.toLowerCase() || 'pending',
+        amount: payment.amount || 0,
+        orderId: payment.order?.id,
+        transactionId: payment.transactionId || 'N/A'
+      }));
+
+      // Cache payments for 5 minutes
+      cacheService.set('adminPayments', transformedPayments, 300000);
+      setPayments(transformedPayments);
+      setError(null);
+    } catch (error) {
+      console.error('❌ Error fetching payments:', error);
+      setError(`Failed to load payments: ${error.message}`);
+
+      // Always show empty state on error to avoid dummy data
+      setPayments([]);
+
+      // Clear any cached dummy data
+      cacheService.clear('adminPayments');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+
 
   const statusOptions = ['all', 'pending', 'completed', 'failed', 'refunded'];
   const methodOptions = ['all', 'Mobile Money', 'Bank Transfer', 'Credit Card'];

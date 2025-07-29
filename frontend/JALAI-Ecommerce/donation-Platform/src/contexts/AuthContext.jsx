@@ -145,13 +145,19 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('refreshToken');
         }
       } finally {
-        console.log('🏁 AuthContext: Auth initialization completed');
+        // Only log in debug mode
+        if (localStorage.getItem('debugAuth') === 'true') {
+          console.log('🏁 AuthContext: Auth initialization completed');
+        }
         persistentLog('Auth initialization completed', { loading: false });
         setLoading(false);
       }
     };
 
-    console.log('🚀 AuthContext: Starting initialization...');
+    // Only log in debug mode
+    if (localStorage.getItem('debugAuth') === 'true') {
+      console.log('🚀 AuthContext: Starting initialization...');
+    }
     initializeAuth();
 
     // Only monitor authentication state in debug mode
