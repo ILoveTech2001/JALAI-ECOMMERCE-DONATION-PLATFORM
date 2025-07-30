@@ -68,12 +68,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/products").permitAll() // Allow public access to products list
                         .requestMatchers("/api/products/search").permitAll()
                         .requestMatchers("/api/products/category/**").permitAll()
-                        .requestMatchers("/api/products/approved").permitAll() // Allow public access to approved
-                                                                               // products
+                        .requestMatchers("/api/products/approved").permitAll() // Allow public access to approved products
                         .requestMatchers("/api/categories/public").permitAll()
                         .requestMatchers("/api/orphanages/public").permitAll()
-                        .requestMatchers("/api/orphanages/*").permitAll() // Allow public access to individual
-                                                                          // orphanages
+                        .requestMatchers("/api/orphanages/*").permitAll() // Allow public access to individual orphanages
                         .requestMatchers("/actuator/health").permitAll()
 
                         // Admin only endpoints
@@ -88,6 +86,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/orders/**").hasRole("CLIENT")
                         .requestMatchers("/api/donations/**").hasRole("CLIENT")
                         .requestMatchers("/api/reviews/**").hasRole("CLIENT")
+                        // Explicitly require CLIENT role for image upload
+                        .requestMatchers("/api/images/upload").hasRole("CLIENT")
 
                         // Orphanage endpoints
                         .requestMatchers("/api/orphanage/**").hasRole("ORPHANAGE")
