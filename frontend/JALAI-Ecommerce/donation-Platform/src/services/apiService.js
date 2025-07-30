@@ -1209,6 +1209,43 @@ class ApiService {
   }
 
   /**
+   * Upload image file and return image ID
+   * @param {File} file - Image file to upload
+   * @returns {Promise<Object>} - Upload response with imageId
+   */
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${this.baseURL}/images/upload`;
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken') || this.token;
+
+    const config = {
+      method: 'POST',
+      body: formData,
+      headers: {}
+    };
+
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      config.credentials = 'include';
+    }
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Image upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Image upload error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create product with new image system
    * @param {Object} productData - Product data including imageId
    * @returns {Promise<Object>} - Created product

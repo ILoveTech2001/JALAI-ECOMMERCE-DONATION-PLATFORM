@@ -19,6 +19,8 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        value: "http://localhost:3000,https://jalai-ecommerce-donation-platform.vercel.app,https://jalai-frontend.onrender.com"
     healthCheckPath: /actuator/health
 
   # Optional: Add database service

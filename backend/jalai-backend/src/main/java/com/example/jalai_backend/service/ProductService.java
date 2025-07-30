@@ -11,6 +11,8 @@ import com.example.jalai_backend.repository.CategoryRepository;
 import com.example.jalai_backend.repository.ClientRepository;
 import com.example.jalai_backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +53,7 @@ public class ProductService {
         return productRepository.findByIsAvailableTrue();
     }
 
+    @Cacheable(value = "approvedProducts", unless = "#result.size() == 0")
     public List<Product> getAllApprovedProducts() {
         return productRepository.findByIsApprovedTrue();
     }
@@ -87,6 +90,7 @@ public class ProductService {
         return productRepository.findByPriceBetween(minPrice, maxPrice);
     }
 
+    @CacheEvict(value = {"clientProducts", "approvedProducts"}, key = "#sellerId")
     public Product createProduct(Product product, UUID sellerId, UUID categoryId) {
         // Validate seller
         Client seller = clientRepository.findById(sellerId)
@@ -452,6 +456,7 @@ public class ProductService {
         return new PageImpl<>(summaries, pageable, products.getTotalElements());
     }
 
+    @Cacheable(value = "clientProducts", key = "#clientId", unless = "#result.size() == 0")
     public List<ProductSummaryDTO> getProductsByClient(UUID clientId) {
         List<Product> products = productRepository.findBySellerIdOrderByCreatedAtDesc(clientId);
         return products.stream()

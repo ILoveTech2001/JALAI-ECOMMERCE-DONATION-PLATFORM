@@ -1,5 +1,6 @@
 package com.example.jalai_backend.controller;
 
+import com.example.jalai_backend.dto.MessageResponse;
 import com.example.jalai_backend.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;

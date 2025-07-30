@@ -380,29 +380,8 @@ export default function UserDashboard() {
         return;
       }
 
-      // Step 1: Upload image to /api/images/upload and get imageId
-      const formDataImage = new FormData();
-      formDataImage.append('file', selectedPhoto.file);
-
-
-      // --- Auth logic for image upload (use correct key: accessToken) ---
-      let fetchOptions = {
-        method: 'POST',
-        body: formDataImage,
-      };
-      // Use the same key as AuthContext for JWT
-      let token = localStorage.getItem('accessToken');
-      if (token) {
-        fetchOptions.headers = { 'Authorization': `Bearer ${token}` };
-      } else {
-        fetchOptions.credentials = 'include'; // fallback for cookie-based auth
-      }
-
-      const uploadResponse = await fetch('/api/images/upload', fetchOptions);
-      if (!uploadResponse.ok) {
-        throw new Error('Image upload failed');
-      }
-      const uploadData = await uploadResponse.json();
+      // Step 1: Upload image using apiService
+      const uploadData = await apiService.uploadImage(selectedPhoto.file);
       const imageId = uploadData.imageId;
       if (!imageId) {
         throw new Error('Image upload did not return an imageId');
