@@ -1,9 +1,10 @@
 package com.example.jalai_backend.service;
 
-import com.example.jalai_backend.model.Product;
-import com.example.jalai_backend.repository.ProductRepository;
+import com.example.jalai_backend.model.Image;
+import com.example.jalai_backend.repository.ImageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -17,10 +18,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class ImageService {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ImageRepository imageRepository;
 
     private static final int MAX_WIDTH = 800;
     private static final int MAX_HEIGHT = 600;
@@ -30,19 +32,24 @@ public class ImageService {
      * Save uploaded image file
      */
     public UUID saveImage(MultipartFile file) throws IOException {
+        // Validate file
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
         // Compress and resize image
         byte[] compressedImageData = compressImage(file.getBytes(), file.getContentType());
-        
-        // Create a temporary product entry to store image
-        Product product = new Product();
-        product.setImageData(compressedImageData);
-        product.setImageFilename(file.getOriginalFilename());
-        product.setImageContentType(file.getContentType());
-        product.setImageSize((long) compressedImageData.length);
-        
-        // Save and return ID (this will be used later when creating the actual product)
-        Product savedProduct = productRepository.save(product);
-        return savedProduct.getId();
+
+        // Create image entity
+        Image image = new Image();
+        image.setFilename(file.getOriginalFilename());
+        image.setContentType(file.getContentType());
+        image.setSize((long) compressedImageData.length);
+        image.setData(compressedImageData);
+
+        // Save and return ID
+        Image savedImage = imageRepository.save(image);
+        return savedImage.getId();
     }
 
     /**
@@ -54,35 +61,35 @@ public class ImageService {
         if (imageData.contains(",")) {
             imageData = imageData.split(",")[1];
         }
-        
+
         // Decode base64
         byte[] decodedBytes = Base64.getDecoder().decode(imageData);
-        
+
         // Compress and resize
         byte[] compressedImageData = compressImage(decodedBytes, contentType);
-        
-        // Create temporary product entry
-        Product product = new Product();
-        product.setImageData(compressedImageData);
-        product.setImageFilename(filename != null ? filename : "image.jpg");
-        product.setImageContentType(contentType != null ? contentType : "image/jpeg");
-        product.setImageSize((long) compressedImageData.length);
-        
-        Product savedProduct = productRepository.save(product);
-        return savedProduct.getId();
+
+        // Create image entity
+        Image image = new Image();
+        image.setFilename(filename != null ? filename : "image.jpg");
+        image.setContentType(contentType != null ? contentType : "image/jpeg");
+        image.setSize((long) compressedImageData.length);
+        image.setData(compressedImageData);
+
+        Image savedImage = imageRepository.save(image);
+        return savedImage.getId();
     }
 
     /**
      * Get image data by ID
      */
     public ImageData getImage(UUID imageId) {
-        Optional<Product> productOpt = productRepository.findById(imageId);
-        if (productOpt.isPresent() && productOpt.get().getImageData() != null) {
-            Product product = productOpt.get();
+        Optional<Image> imageOpt = imageRepository.findById(imageId);
+        if (imageOpt.isPresent()) {
+            Image image = imageOpt.get();
             return new ImageData(
-                product.getImageData(),
-                product.getImageContentType(),
-                product.getImageFilename()
+                image.getData(),
+                image.getContentType(),
+                image.getFilename()
             );
         }
         return null;
@@ -92,15 +99,15 @@ public class ImageService {
      * Get image metadata
      */
     public ImageInfo getImageInfo(UUID imageId) {
-        Optional<Product> productOpt = productRepository.findById(imageId);
-        if (productOpt.isPresent() && productOpt.get().getImageData() != null) {
-            Product product = productOpt.get();
+        Optional<Image> imageOpt = imageRepository.findById(imageId);
+        if (imageOpt.isPresent()) {
+            Image image = imageOpt.get();
             return new ImageInfo(
                 imageId,
-                product.getImageFilename(),
-                product.getImageContentType(),
-                product.getImageSize(),
-                product.getCreatedAt()
+                image.getFilename(),
+                image.getContentType(),
+                image.getSize(),
+                image.getCreatedAt()
             );
         }
         return null;
@@ -110,14 +117,9 @@ public class ImageService {
      * Delete image by ID
      */
     public boolean deleteImage(UUID imageId) {
-        Optional<Product> productOpt = productRepository.findById(imageId);
-        if (productOpt.isPresent()) {
-            Product product = productOpt.get();
-            // Only delete if this is just an image (no other product data)
-            if (product.getName() == null && product.getPrice() == null) {
-                productRepository.delete(product);
-                return true;
-            }
+        if (imageRepository.existsById(imageId)) {
+            imageRepository.deleteById(imageId);
+            return true;
         }
         return false;
     }
