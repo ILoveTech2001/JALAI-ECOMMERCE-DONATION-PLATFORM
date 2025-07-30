@@ -65,6 +65,33 @@ export const AuthProvider = ({ children }) => {
 
   const user = userState;
 
+  // Log limiter to prevent excessive console spam
+  const logLimiter = (() => {
+    const logCounts = new Map();
+    const maxLogsPerMessage = 5; // Maximum times a message can be logged
+    const resetInterval = 60000; // Reset counts every minute
+
+    // Reset counts periodically
+    setInterval(() => {
+      logCounts.clear();
+    }, resetInterval);
+
+    return (messageKey) => {
+      const count = logCounts.get(messageKey) || 0;
+      if (count >= maxLogsPerMessage) {
+        return false; // Don't log
+      }
+      logCounts.set(messageKey, count + 1);
+
+      // Show warning when approaching limit
+      if (count === maxLogsPerMessage - 1) {
+        console.warn(`[AUTH] Message "${messageKey}" has reached log limit. Further instances will be suppressed.`);
+      }
+
+      return true; // Allow logging
+    };
+  })();
+
   // Helper function for controlled logging (only in development)
   const persistentLog = (message, data = null, level = 'info') => {
     // Only log in development mode or when explicitly enabled
@@ -73,19 +100,27 @@ export const AuthProvider = ({ children }) => {
 
     if (!isDev && !debugAuth) return;
 
+    // Create a key for this message to track frequency
+    const messageKey = message.replace(/\d+/g, 'X'); // Replace numbers to group similar messages
+
+    // Check if we should log this message
+    if (!logLimiter(messageKey)) {
+      return; // Skip logging if limit reached
+    }
+
     const logEntry = `[AUTH ${new Date().toLocaleTimeString()}] ${message}`;
 
     // Use appropriate console method based on level
-    switch (level) {
-      case 'error':
-        console.error(logEntry, data);
-        break;
-      case 'warn':
-        console.warn(logEntry, data);
-        break;
-      default:
-        console.log(logEntry, data);
-    }
+    // switch (level) {
+    //   case 'error':
+    //     console.error(logEntry, data);
+    //     break;
+    //   case 'warn':
+    //     console.warn(logEntry, data);
+    //     break;
+    //   default:
+    //     console.log(logEntry, data);
+    // }
 
     // Store in sessionStorage for debugging (only keep last 10 entries)
     if (debugAuth) {

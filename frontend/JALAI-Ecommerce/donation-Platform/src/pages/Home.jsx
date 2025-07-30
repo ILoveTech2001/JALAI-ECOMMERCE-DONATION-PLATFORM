@@ -288,6 +288,13 @@ const Home = ({
   // Fetch products by categories
   useEffect(() => {
     const fetchProductsByCategories = async () => {
+      // Prevent excessive API calls - only fetch if not fetched recently
+      const lastHomeFetch = sessionStorage.getItem('lastHomeFetch');
+      const now = Date.now();
+      if (lastHomeFetch && (now - parseInt(lastHomeFetch)) < 60000) { // 1 minute cooldown
+        return;
+      }
+
       setLoading(true);
       try {
         const categories = ['Clothing', 'Footwear', 'Utensils', 'Electronics', 'Furniture'];
@@ -305,6 +312,9 @@ const Home = ({
         setUtensilsProducts(utensils.content || []);
         setElectronicsProducts(electronics.content || []);
         setFurnitureProducts(furniture.content || []);
+
+        // Mark successful fetch
+        sessionStorage.setItem('lastHomeFetch', now.toString());
       } catch (error) {
         console.error('Failed to fetch products:', error);
         // Keep empty arrays as fallback

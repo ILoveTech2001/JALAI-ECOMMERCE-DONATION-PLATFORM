@@ -1,4 +1,6 @@
 // API Service for JALAI Donation Platform
+import { limitedConsole } from '../utils/logLimiter.js';
+
 class ApiService {
   constructor() {
     // Use environment variable for production, fallback to localhost for development
@@ -8,8 +10,33 @@ class ApiService {
     // Ensure the base URL includes /api path
     this.baseURL = baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`;
 
-    console.log('🔧 API Service initialized with baseURL:', this.baseURL);
+    // Only log in debug mode with limiting
+    if (localStorage.getItem('debugAPI') === 'true') {
+      limitedConsole.log('🔧 API Service initialized with baseURL:', this.baseURL);
+    }
     this.token = localStorage.getItem('accessToken') || localStorage.getItem('adminToken');
+    this.cache = new Map(); // Simple in-memory cache to reduce API calls
+  }
+
+  // Cache management methods to reduce server load
+  getCachedData(key) {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() < cached.expiry) {
+      return cached.data;
+    }
+    this.cache.delete(key);
+    return null;
+  }
+
+  setCachedData(key, data, ttlMs = 5 * 60 * 1000) { // Default 5 minutes
+    this.cache.set(key, {
+      data,
+      expiry: Date.now() + ttlMs
+    });
+  }
+
+  clearCache() {
+    this.cache.clear();
   }
 
   setToken(token) {
@@ -376,9 +403,23 @@ class ApiService {
 
   async getApprovedProductsByCategory(categoryName, page = 0, size = 4) {
     try {
-      return await this.publicRequest(`/products/approved/category/${encodeURIComponent(categoryName)}?page=${page}&size=${size}`);
+      // Check cache first to reduce API calls
+      const cacheKey = `products_category_${categoryName}_${page}_${size}`;
+      const cached = this.getCachedData(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const response = await this.publicRequest(`/products/approved/category/${encodeURIComponent(categoryName)}?page=${page}&size=${size}`);
+
+      // Cache for 3 minutes
+      this.setCachedData(cacheKey, response, 3 * 60 * 1000);
+
+      return response;
     } catch (error) {
-      console.warn(`Failed to fetch products for category ${categoryName}, using fallback data:`, error);
+      if (localStorage.getItem('debugAPI') === 'true') {
+        console.warn(`Failed to fetch products for category ${categoryName}, using fallback data:`, error);
+      }
       // Return fallback data structure that matches expected API response
       return {
         content: this.getFallbackProductsForCategory(categoryName, size),
@@ -393,16 +434,19 @@ class ApiService {
   }
 
   async createProduct(productData) {
-    console.log('🚀 Creating product with data:', {
-      name: productData.name,
-      price: productData.price,
-      description: productData.description?.substring(0, 50) + '...',
-      categoryId: productData.categoryId,
-      sellerId: productData.sellerId,
-      hasImageUrl: !!productData.imageUrl,
-      imageUrlType: productData.imageUrl?.startsWith('data:') ? 'base64' : 'url',
-      imageUrlLength: productData.imageUrl?.length
-    });
+    // Only log in debug mode with limiting to reduce console spam
+    if (localStorage.getItem('debugAPI') === 'true') {
+      limitedConsole.log('🚀 Creating product with data:', {
+        name: productData.name,
+        price: productData.price,
+        description: productData.description?.substring(0, 50) + '...',
+        categoryId: productData.categoryId,
+        sellerId: productData.sellerId,
+        hasImageUrl: !!productData.imageUrl,
+        imageUrlType: productData.imageUrl?.startsWith('data:') ? 'base64' : 'url',
+        imageUrlLength: productData.imageUrl?.length
+      });
+    }
 
     try {
       const response = await this.request('/products', {
@@ -410,10 +454,13 @@ class ApiService {
         body: JSON.stringify(productData),
       });
 
-      console.log('✅ Product created successfully:', response);
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.log('✅ Product created successfully:', response);
+      }
       return response;
     } catch (error) {
-      console.error('❌ Failed to create product:', error);
+      // Always log errors but with limiting
+      limitedConsole.error('❌ Failed to create product:', error.message || error);
       throw error;
     }
   }
@@ -480,7 +527,19 @@ class ApiService {
   }
 
   async getProductsByClient(clientId) {
-    return this.request(`/products/client/${clientId}`);
+    // Check cache first to reduce API calls
+    const cacheKey = `products_client_${clientId}`;
+    const cached = this.getCachedData(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await this.request(`/products/client/${clientId}`);
+
+    // Cache for 2 minutes
+    this.setCachedData(cacheKey, response, 2 * 60 * 1000);
+
+    return response;
   }
 
   // User data methods
@@ -603,12 +662,32 @@ class ApiService {
   // Category methods
   async getCategories() {
     try {
-      console.log('🔍 Fetching categories from:', `${this.baseURL}/categories/public`);
+      // Check cache first to reduce API calls
+      const cacheKey = 'categories_public';
+      const cached = this.getCachedData(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      // Only log in debug mode with limiting
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.log('🔍 Fetching categories from:', `${this.baseURL}/categories/public`);
+      }
+
       const response = await this.publicRequest('/categories/public');
-      console.log('✅ Categories fetched successfully:', response);
+
+      // Cache the response for 5 minutes
+      this.setCachedData(cacheKey, response, 5 * 60 * 1000);
+
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.log('✅ Categories fetched successfully:', response);
+      }
       return response;
     } catch (error) {
-      console.error('❌ Failed to fetch categories from backend:', error);
+      // Reduce error logging frequency
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.error('❌ Failed to fetch categories from backend:', error);
+      }
 
       // Only show fallback message once per session
       if (!sessionStorage.getItem('categoriesFallbackShown')) {
@@ -1050,6 +1129,92 @@ class ApiService {
 
   async getPaymentStats() {
     return this.request('/payments/stats');
+  }
+
+  // ===== IMAGE MANAGEMENT =====
+
+  /**
+   * Upload image file using multipart/form-data
+   * @param {File} file - Image file to upload
+   * @returns {Promise<Object>} - Upload result with imageId
+   */
+  async uploadImageFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/images/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Upload failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Upload base64 image data
+   * @param {string} base64Data - Base64 encoded image
+   * @param {string} filename - Original filename
+   * @param {string} contentType - MIME type
+   * @returns {Promise<Object>} - Upload result with imageId
+   */
+  async uploadBase64Image(base64Data, filename = 'image.jpg', contentType = 'image/jpeg') {
+    return this.request('/images/upload-base64', 'POST', {
+      imageData: base64Data,
+      filename: filename,
+      contentType: contentType
+    });
+  }
+
+  /**
+   * Get image by ID
+   * @param {string} imageId - Image ID
+   * @returns {Promise<Blob>} - Image blob data
+   */
+  async getImage(imageId) {
+    const response = await fetch(`${this.baseURL}/images/${imageId}`, {
+      headers: this.getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get image: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Get image info/metadata
+   * @param {string} imageId - Image ID
+   * @returns {Promise<Object>} - Image metadata
+   */
+  async getImageInfo(imageId) {
+    return this.request(`/images/${imageId}/info`);
+  }
+
+  /**
+   * Delete image by ID
+   * @param {string} imageId - Image ID to delete
+   * @returns {Promise<Object>} - Deletion result
+   */
+  async deleteImage(imageId) {
+    return this.request(`/images/${imageId}`, 'DELETE');
+  }
+
+  /**
+   * Create product with new image system
+   * @param {Object} productData - Product data including imageId
+   * @returns {Promise<Object>} - Created product
+   */
+  async createProductWithImage(productData) {
+    return this.request('/products', 'POST', productData);
   }
 }
 

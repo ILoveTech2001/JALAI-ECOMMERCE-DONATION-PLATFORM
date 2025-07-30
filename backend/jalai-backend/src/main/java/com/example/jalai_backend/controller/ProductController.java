@@ -60,7 +60,15 @@ public class ProductController {
             product.setName(request.getName());
             product.setDescription(request.getDescription());
             product.setPrice(request.getPrice());
-            product.setImageUrl(request.getImageUrl());
+
+            // Handle both new image system and legacy base64
+            if (request.getImageId() != null) {
+                // New system: use image ID
+                product.setImageUrl("/api/images/" + request.getImageId());
+            } else if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+                // Legacy system: handle base64 or URL
+                product.setImageUrl(request.getImageUrl());
+            }
 
             Product createdProduct = productService.createProduct(
                     product, request.getSellerId(), request.getCategoryId());
@@ -247,7 +255,8 @@ public class ProductController {
         private String name;
         private String description;
         private BigDecimal price;
-        private String imageUrl;
+        private String imageUrl; // Legacy support
+        private UUID imageId; // New image system
         private UUID sellerId;
         private UUID categoryId;
 
@@ -282,6 +291,14 @@ public class ProductController {
 
         public void setImageUrl(String imageUrl) {
             this.imageUrl = imageUrl;
+        }
+
+        public UUID getImageId() {
+            return imageId;
+        }
+
+        public void setImageId(UUID imageId) {
+            this.imageId = imageId;
         }
 
         public UUID getSellerId() {

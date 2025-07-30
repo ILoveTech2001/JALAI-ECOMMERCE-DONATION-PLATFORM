@@ -43,8 +43,21 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "image_url", length = 1000)
-    private String imageUrl;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl; // For external URLs or file paths
+
+    @Lob
+    @Column(name = "image_data", columnDefinition = "BYTEA")
+    private byte[] imageData; // For storing actual image binary data
+
+    @Column(name = "image_filename", length = 255)
+    private String imageFilename; // Original filename
+
+    @Column(name = "image_content_type", length = 100)
+    private String imageContentType; // MIME type (image/jpeg, image/png, etc.)
+
+    @Column(name = "image_size")
+    private Long imageSize; // File size in bytes
 
     @Column(name = "is_donated")
     private Boolean isDonated = false;

@@ -2,6 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useAuth } from "../../contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
 import apiService from "../../services/apiService"
+import { limitedConsole } from "../../utils/logLimiter"
+import { validateImage } from "../../utils/imageUtils"
+import { smartImageHandler } from "../../utils/imageStorage"
 import PaymentModal from "../PaymentModal"
 import {
   ShoppingBag,
@@ -9,24 +12,18 @@ import {
   Settings,
   Home,
   Upload,
-  CreditCard,
   Facebook,
   Twitter,
   Eye,
   Plus,
   Package,
   TrendingUp,
-  Gift,
   Trash2,
-  Smartphone,
-  Wallet,
   MessageCircle,
   Phone,
   Edit,
   Check,
   X,
-  AlertCircle,
-  History,
   Heart,
   ShoppingBag as CartIcon,
   Bell,
@@ -50,6 +47,8 @@ export default function UserDashboard() {
     itemsSold: 0,
     itemsBought: 0,
   })
+  const [debugMode, setDebugMode] = useState(localStorage.getItem('debugAPI') === 'true')
+  const [isInitializing, setIsInitializing] = useState(false)
   const [photos, setPhotos] = useState([])
   const [sellItems, setSellItems] = useState([])
   const [orders, setOrders] = useState([])
@@ -84,35 +83,30 @@ export default function UserDashboard() {
     }
   }, [loading, user, navigate])
 
-  // Initialize user data
-  useEffect(() => {
-    if (user) {
-      setUserName(user.name || user.email || "User")
-      fetchInitialData()
+  const refreshNotifications = useCallback(async () => {
+    if (!user) return
+    try {
+      const notificationsResponse = await apiService.getNotificationsByClient(user.id)
+      if (notificationsResponse && Array.isArray(notificationsResponse)) {
+        setNotifications(notificationsResponse)
+      } else {
+        setNotifications([])
+      }
+    } catch (error) {
+      console.error('Error refreshing notifications:', error)
+      setNotifications([])
     }
   }, [user])
 
-  const fetchInitialData = async () => {
+  const refreshUserData = useCallback(async () => {
     if (!user) return
-    try {
-      // Fetch categories
-      const categoriesResponse = await apiService.getCategories()
-      if (categoriesResponse && Array.isArray(categoriesResponse)) {
-        console.log('📋 Categories loaded:', categoriesResponse.map(c => ({ id: c.id, name: c.name })))
-        setCategories(categoriesResponse)
-      } else {
-        console.warn('⚠️ No categories received from API')
-      }
 
-      // Fetch user data
-      await refreshAllUserData()
-    } catch (error) {
-      console.error('Error fetching initial data:', error)
+    // Prevent excessive refresh calls
+    const lastRefresh = sessionStorage.getItem('lastUserDataRefresh');
+    const now = Date.now();
+    if (lastRefresh && (now - parseInt(lastRefresh)) < 10000) { // 10 seconds cooldown
+      return;
     }
-  }
-
-  const refreshAllUserData = async () => {
-    if (!user) return
 
     try {
       // Fetch sell items
@@ -156,28 +150,59 @@ export default function UserDashboard() {
         setOrders(formattedOrders)
       }
 
-      // Fetch notifications
-      await refreshNotifications()
-
+      // Mark successful refresh
+      sessionStorage.setItem('lastUserDataRefresh', now.toString());
     } catch (error) {
       console.error('Error refreshing user data:', error)
     }
-  }
-
-  const refreshNotifications = useCallback(async () => {
-    if (!user) return
-    try {
-      const notificationsResponse = await apiService.getNotificationsByClient(user.id)
-      if (notificationsResponse && Array.isArray(notificationsResponse)) {
-        setNotifications(notificationsResponse)
-      } else {
-        setNotifications([])
-      }
-    } catch (error) {
-      console.error('Error refreshing notifications:', error)
-      setNotifications([])
-    }
   }, [user])
+
+  const fetchInitialData = useCallback(async () => {
+    if (!user || isInitializing) return
+
+    // Prevent excessive API calls - only fetch if not fetched recently
+    const lastFetch = sessionStorage.getItem('lastDataFetch');
+    const now = Date.now();
+    if (lastFetch && (now - parseInt(lastFetch)) < 30000) { // 30 seconds cooldown
+      return;
+    }
+
+    setIsInitializing(true);
+    try {
+      // Fetch categories
+      const categoriesResponse = await apiService.getCategories()
+      if (categoriesResponse && Array.isArray(categoriesResponse)) {
+        // Only log in debug mode with limiting to reduce console spam
+        if (localStorage.getItem('debugAPI') === 'true') {
+          limitedConsole.log('📋 Categories loaded:', categoriesResponse.map(c => ({ id: c.id, name: c.name })))
+        }
+        setCategories(categoriesResponse)
+      } else {
+        console.warn('⚠️ No categories received from API')
+      }
+
+      // Fetch user data
+      await refreshUserData()
+
+      // Fetch notifications separately to avoid circular dependencies
+      await refreshNotifications()
+
+      // Mark successful fetch
+      sessionStorage.setItem('lastDataFetch', now.toString());
+    } catch (error) {
+      console.error('Error fetching initial data:', error)
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [user, isInitializing])
+
+  // Initialize user data
+  useEffect(() => {
+    if (user) {
+      setUserName(user.name || user.email || "User")
+      fetchInitialData()
+    }
+  }, [user, fetchInitialData]) // Add fetchInitialData as dependency
 
   // Calculate stats when data changes
   useEffect(() => {
@@ -228,74 +253,84 @@ export default function UserDashboard() {
   ]
 
   // Handler functions
-  const handlePhotoUpload = (event) => {
+  const handlePhotoUpload = async (event) => {
     const files = Array.from(event.target.files)
 
-    // Validate file types and sizes
-    const validFiles = files.filter(file => {
-      const isValidType = file.type.startsWith('image/')
-      const isValidSize = file.size <= 5 * 1024 * 1024 // 5MB limit
-
-      if (!isValidType) {
-        alert(`${file.name} is not a valid image file. Please upload JPG, PNG, or other image formats.`)
-        return false
-      }
-
-      if (!isValidSize) {
-        alert(`${file.name} is too large. Please upload images smaller than 5MB.`)
-        return false
-      }
-
-      return true
-    })
-
-    validFiles.forEach((file) => {
-      const reader = new FileReader()
-
-      reader.onload = (e) => {
-        try {
-          const result = e.target.result
-
-          // Validate that we got a proper base64 data URL
-          if (!result || !result.startsWith('data:image/')) {
-            console.error('❌ Failed to read image file:', file.name)
-            alert(`Failed to process image: ${file.name}. Please try a different image.`)
-            return
-          }
-
-          const newPhoto = {
-            id: Date.now() + Math.random(),
-            name: file.name,
-            url: result, // This is the base64 data URL
-            file: file,
-            size: file.size,
-            type: file.type
-          }
-
-          console.log('📸 Photo uploaded successfully:', {
-            name: newPhoto.name,
-            size: `${(newPhoto.size / 1024).toFixed(1)}KB`,
-            type: newPhoto.type,
-            hasValidUrl: newPhoto.url.startsWith('data:image/')
-          })
-
-          setPhotos((prev) => [...prev, newPhoto])
-        } catch (error) {
-          console.error('❌ Error processing image:', error)
-          alert(`Failed to process image: ${file.name}. Please try again.`)
+    // Process files one by one to avoid overwhelming the browser
+    for (const file of files) {
+      try {
+        // Validate the image file
+        const validation = validateImage(file);
+        if (!validation.isValid) {
+          alert(`${file.name}: ${validation.errors.join(', ')}`);
+          continue;
         }
-      }
 
-      reader.onerror = (error) => {
-        console.error('❌ FileReader error:', error)
-        alert(`Failed to read image: ${file.name}. Please try again.`)
-      }
+        // Show processing indicator
+        const processingPhoto = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          url: '/placeholder.svg?height=200&width=200',
+          file: file,
+          size: file.size,
+          type: file.type,
+          processing: true
+        };
+        setPhotos((prev) => [...prev, processingPhoto]);
 
-      reader.readAsDataURL(file)
-    })
+        // Use smart image handler to choose the best approach
+        const imageResult = await smartImageHandler(file);
+
+        // Calculate compression ratio if applicable
+        const originalSizeKB = file.size / 1024;
+        const processedSizeKB = imageResult.size / 1024;
+        const compressionRatio = imageResult.type.includes('base64')
+          ? ((originalSizeKB - processedSizeKB) / originalSizeKB * 100).toFixed(1)
+          : 'N/A';
+
+        const newPhoto = {
+          id: processingPhoto.id,
+          name: file.name,
+          url: imageResult.data,
+          file: file,
+          size: file.size,
+          compressedSize: imageResult.size,
+          type: file.type,
+          processing: false,
+          strategy: imageResult.strategy,
+          needsUpload: imageResult.needsUpload || false
+        };
+
+        // Only log in debug mode with limiting
+        if (localStorage.getItem('debugAPI') === 'true') {
+          limitedConsole.log('📸 Photo processed successfully:', {
+            name: newPhoto.name,
+            originalSize: `${originalSizeKB.toFixed(1)}KB`,
+            processedSize: `${processedSizeKB.toFixed(1)}KB`,
+            compressionRatio: compressionRatio !== 'N/A' ? `${compressionRatio}% smaller` : compressionRatio,
+            strategy: imageResult.strategy,
+            type: newPhoto.type
+          });
+        }
+
+        // Update the photo in the list
+        setPhotos((prev) => prev.map(photo =>
+          photo.id === processingPhoto.id ? newPhoto : photo
+        ));
+
+      } catch (error) {
+        limitedConsole.error('❌ Error processing image:', error);
+        alert(`Failed to process image: ${file.name}. ${error.message}`);
+
+        // Remove the processing photo on error
+        setPhotos((prev) => prev.filter(photo =>
+          !(photo.name === file.name && photo.processing)
+        ));
+      }
+    }
 
     // Clear the input so the same file can be uploaded again if needed
-    event.target.value = ''
+    event.target.value = '';
   }
 
   const deletePhoto = (photoId) => {
@@ -351,13 +386,17 @@ export default function UserDashboard() {
         return
       }
 
-      console.log("📸 Selected photo data:", {
-        id: selectedPhoto.id,
-        name: selectedPhoto.name,
-        hasUrl: !!selectedPhoto.url,
-        hasFile: !!selectedPhoto.file,
-        urlType: selectedPhoto.url?.startsWith('data:') ? 'base64' : 'other'
-      })
+      // Only log in debug mode with limiting
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.log("📸 Selected photo data:", {
+          id: selectedPhoto.id,
+          name: selectedPhoto.name,
+          originalSize: selectedPhoto.size ? `${(selectedPhoto.size / 1024).toFixed(1)}KB` : 'unknown',
+          compressedSize: selectedPhoto.compressedSize ? `${(selectedPhoto.compressedSize / 1024).toFixed(1)}KB` : 'unknown',
+          hasUrl: !!selectedPhoto.url,
+          urlType: selectedPhoto.url?.startsWith('data:') ? 'base64' : 'other'
+        });
+      }
 
       const itemData = {
         name: formData.name,
@@ -368,15 +407,23 @@ export default function UserDashboard() {
         imageUrl: selectedPhoto.url, // Use the base64 data URL directly
       }
 
-      console.log("🚀 Submitting item data:", {
-        ...itemData,
-        imageUrl: itemData.imageUrl ? `${itemData.imageUrl.substring(0, 50)}...` : null
-      })
+      // Only log in debug mode with limiting to reduce console spam
+      if (localStorage.getItem('debugAPI') === 'true') {
+        limitedConsole.log("🚀 Submitting item data:", {
+          ...itemData,
+          imageUrl: itemData.imageUrl ? `${itemData.imageUrl.substring(0, 50)}...` : null
+        })
+      }
 
       const response = await apiService.createProduct(itemData)
 
       if (response) {
         alert("Item listed successfully!")
+
+        // Clear cache to ensure fresh data
+        apiService.clearCache()
+        sessionStorage.removeItem('lastUserDataRefresh')
+
         setFormData({
           name: "",
           price: "",
@@ -386,7 +433,7 @@ export default function UserDashboard() {
           selectedPhotos: [],
         })
         setPhotos([]) // Clear uploaded photos
-        await refreshAllUserData()
+        await refreshUserData()
       }
     } catch (error) {
       console.error("❌ Error creating product:", error)
@@ -437,7 +484,7 @@ export default function UserDashboard() {
         condition: "",
         selectedPhotos: [],
       })
-      await refreshAllUserData()
+      await refreshUserData()
     } catch (error) {
       console.error("Error updating product:", error)
       alert("Failed to update item. Please try again.")
@@ -518,7 +565,7 @@ export default function UserDashboard() {
         setCartItems([])
 
         // Refresh user data to get updated stats
-        await refreshAllUserData()
+        await refreshUserData()
 
         console.log("Order created successfully:", newOrder)
       }
@@ -531,6 +578,26 @@ export default function UserDashboard() {
   const goToHomePage = () => {
     // Navigate to home page while preserving cart state
     navigate('/')
+  }
+
+  const toggleDebugMode = () => {
+    const newDebugMode = !debugMode;
+    setDebugMode(newDebugMode);
+    if (newDebugMode) {
+      localStorage.setItem('debugAPI', 'true');
+      limitedConsole.log('🐛 Debug mode enabled - API calls will be logged with limiting');
+    } else {
+      localStorage.removeItem('debugAPI');
+      limitedConsole.log('🔇 Debug mode disabled - API logging reduced');
+
+      // Show log limiter stats when disabling debug mode
+      import('../../utils/logLimiter').then(({ globalLogLimiter }) => {
+        const stats = globalLogLimiter.getStats();
+        if (stats.totalSuppressed > 0) {
+          console.log('📊 Log Limiter prevented', stats.totalSuppressed, 'excessive log messages');
+        }
+      });
+    }
   }
 
   // Loading and error states
@@ -590,7 +657,7 @@ export default function UserDashboard() {
               <p className="text-green-100 text-sm sm:text-base">Here's what's happening with your account</p>
             </div>
             <button
-              onClick={refreshAllUserData}
+              onClick={refreshUserData}
               className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 self-start sm:self-auto"
             >
               <RefreshCw className="w-4 h-4" />
@@ -738,11 +805,18 @@ export default function UserDashboard() {
           <div className="p-6">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full mb-4 bg-gradient-to-r from-gray-500 to-green-600 hover:from-gray-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2"
+              className="w-full mb-2 bg-gradient-to-r from-gray-500 to-green-600 hover:from-gray-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" />
               Upload Photos
             </button>
+
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">📸 Smart Compression:</span> Images are automatically compressed to reduce server load while maintaining quality. File sizes shown below each image.
+              </p>
+            </div>
+
             <input
               type="file"
               ref={fileInputRef}
@@ -762,16 +836,33 @@ export default function UserDashboard() {
                       formData.selectedPhotos.includes(photo.id)
                         ? "border-green-500 ring-2 ring-green-200"
                         : "border-gray-200 hover:border-green-300"
-                    }`}
-                    onClick={() => togglePhotoSelection(photo.id)}
+                    } ${photo.processing ? "opacity-50" : ""}`}
+                    onClick={() => !photo.processing && togglePhotoSelection(photo.id)}
                   />
+
+                  {/* Processing indicator */}
+                  {photo.processing && (
+                    <div className="absolute inset-0 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+
+                  {/* Compression indicator */}
+                  {photo.compressedSize && !photo.processing && (
+                    <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
+                      {((photo.compressedSize / 1024).toFixed(0))}KB
+                    </div>
+                  )}
+
                   <button
                     className="absolute top-1 right-1 w-6 h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 text-white rounded-full flex items-center justify-center"
                     onClick={() => deletePhoto(photo.id)}
+                    disabled={photo.processing}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
-                  {formData.selectedPhotos.includes(photo.id) && (
+
+                  {formData.selectedPhotos.includes(photo.id) && !photo.processing && (
                     <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                       <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                         <span className="text-white text-xs">✓</span>
@@ -1189,6 +1280,29 @@ export default function UserDashboard() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-green-500 focus:ring-1 focus:ring-green-500"
             />
           </div>
+
+          {/* Debug Mode Toggle */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Debug Mode</label>
+                <p className="text-xs text-gray-500">Enable detailed API logging for troubleshooting</p>
+              </div>
+              <button
+                onClick={toggleDebugMode}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  debugMode ? 'bg-green-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    debugMode ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
           <button className="bg-gradient-to-r from-gray-500 to-green-600 text-white px-6 py-2 rounded-lg">
             Save Changes
           </button>
