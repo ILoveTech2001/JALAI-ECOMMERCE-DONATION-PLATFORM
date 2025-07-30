@@ -383,10 +383,21 @@ export default function UserDashboard() {
       // Step 1: Upload image to /api/images/upload and get imageId
       const formDataImage = new FormData();
       formDataImage.append('file', selectedPhoto.file);
-      const uploadResponse = await fetch('/api/images/upload', {
+
+      // --- Auth logic for image upload ---
+      let fetchOptions = {
         method: 'POST',
         body: formDataImage,
-      });
+      };
+      // Try to get JWT from user, localStorage, or sessionStorage
+      let token = (user && user.token) || localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (token) {
+        fetchOptions.headers = { 'Authorization': `Bearer ${token}` };
+      } else {
+        fetchOptions.credentials = 'include'; // fallback for cookie-based auth
+      }
+
+      const uploadResponse = await fetch('/api/images/upload', fetchOptions);
       if (!uploadResponse.ok) {
         throw new Error('Image upload failed');
       }
