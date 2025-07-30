@@ -353,98 +353,88 @@ export default function UserDashboard() {
   const handleSubmitItem = async () => {
     // Validate required fields
     if (!formData.name?.trim()) {
-      alert("Please enter an item name")
-      return
+      alert("Please enter an item name");
+      return;
     }
-
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      alert("Please enter a valid price greater than 0")
-      return
+      alert("Please enter a valid price greater than 0");
+      return;
     }
-
     if (!formData.description?.trim()) {
-      alert("Please enter an item description")
-      return
+      alert("Please enter an item description");
+      return;
     }
-
     if (!formData.category) {
-      alert("Please select a category")
-      return
+      alert("Please select a category");
+      return;
     }
-
     if (formData.selectedPhotos.length === 0) {
-      alert("Please select at least one photo")
-      return
+      alert("Please select at least one photo");
+      return;
     }
 
     try {
-      const selectedPhoto = photos.find((photo) => photo.id === formData.selectedPhotos[0])
-
-      // Validate that we have a photo with base64 data
-      if (!selectedPhoto || !selectedPhoto.url) {
-        alert("Please select a valid photo")
-        return
+      const selectedPhoto = photos.find((photo) => photo.id === formData.selectedPhotos[0]);
+      if (!selectedPhoto || !selectedPhoto.file) {
+        alert("Please select a valid photo");
+        return;
       }
 
-      // Only log in debug mode with limiting
-      if (localStorage.getItem('debugAPI') === 'true') {
-        limitedConsole.log("📸 Selected photo data:", {
-          id: selectedPhoto.id,
-          name: selectedPhoto.name,
-          originalSize: selectedPhoto.size ? `${(selectedPhoto.size / 1024).toFixed(1)}KB` : 'unknown',
-          compressedSize: selectedPhoto.compressedSize ? `${(selectedPhoto.compressedSize / 1024).toFixed(1)}KB` : 'unknown',
-          hasUrl: !!selectedPhoto.url,
-          urlType: selectedPhoto.url?.startsWith('data:') ? 'base64' : 'other'
-        });
+      // Step 1: Upload image to /api/images and get imageId
+      const formDataImage = new FormData();
+      formDataImage.append('file', selectedPhoto.file);
+      const uploadResponse = await fetch('/api/images', {
+        method: 'POST',
+        body: formDataImage,
+      });
+      if (!uploadResponse.ok) {
+        throw new Error('Image upload failed');
+      }
+      const uploadData = await uploadResponse.json();
+      const imageId = uploadData.imageId;
+      if (!imageId) {
+        throw new Error('Image upload did not return an imageId');
       }
 
+      // Step 2: Create product with imageId
       const itemData = {
         name: formData.name,
         price: parseFloat(formData.price),
         description: formData.description,
         categoryId: formData.category,
-        sellerId: user.id, // Backend expects sellerId, not clientId
-        imageUrl: selectedPhoto.url, // Use the base64 data URL directly
-      }
+        sellerId: user.id, // Backend expects sellerId
+        imageId, // Use imageId, not imageUrl
+      };
 
-      // Only log in debug mode with limiting to reduce console spam
       if (localStorage.getItem('debugAPI') === 'true') {
-        limitedConsole.log("🚀 Submitting item data:", {
-          ...itemData,
-          imageUrl: itemData.imageUrl ? `${itemData.imageUrl.substring(0, 50)}...` : null
-        })
+        limitedConsole.log('🚀 Submitting item data:', { ...itemData });
       }
 
-      const response = await apiService.createProduct(itemData)
+      const response = await apiService.createProduct(itemData);
 
       if (response) {
-        alert("Item listed successfully!")
-
-        // Clear cache to ensure fresh data
-        apiService.clearCache()
-        sessionStorage.removeItem('lastUserDataRefresh')
-
+        alert('Item listed successfully!');
+        apiService.clearCache();
+        sessionStorage.removeItem('lastUserDataRefresh');
         setFormData({
-          name: "",
-          price: "",
-          description: "",
-          category: "",
-          condition: "",
+          name: '',
+          price: '',
+          description: '',
+          category: '',
+          condition: '',
           selectedPhotos: [],
-        })
-        setPhotos([]) // Clear uploaded photos
-        await refreshUserData()
+        });
+        setPhotos([]);
+        await refreshUserData();
       }
     } catch (error) {
-      console.error("❌ Error creating product:", error)
-
-      // More detailed error handling
-      if (error.message?.includes('Failed to load image data')) {
-        alert("Image upload failed. Please try uploading a different image or check your internet connection.")
+      console.error('❌ Error creating product:', error);
+      if (error.message?.includes('Image upload failed')) {
+        alert('Image upload failed. Please try uploading a different image or check your internet connection.');
       } else if (error.message?.includes('Network')) {
-        alert("Network error. Please check your internet connection and try again.")
+        alert('Network error. Please check your internet connection and try again.');
       } else {
-        alert(`Failed to list item: ${error.message || 'Unknown error'}. Please try again.`)
+        alert(`Failed to list item: ${error.message || 'Unknown error'}. Please try again.`);
       }
     }
   }
