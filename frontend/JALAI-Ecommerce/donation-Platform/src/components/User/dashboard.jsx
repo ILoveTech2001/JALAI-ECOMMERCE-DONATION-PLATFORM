@@ -384,13 +384,14 @@ export default function UserDashboard() {
       const formDataImage = new FormData();
       formDataImage.append('file', selectedPhoto.file);
 
-      // --- Auth logic for image upload ---
+
+      // --- Auth logic for image upload (use correct key: accessToken) ---
       let fetchOptions = {
         method: 'POST',
         body: formDataImage,
       };
-      // Try to get JWT from user, localStorage, or sessionStorage
-      let token = (user && user.token) || localStorage.getItem('token') || sessionStorage.getItem('token');
+      // Use the same key as AuthContext for JWT
+      let token = localStorage.getItem('accessToken');
       if (token) {
         fetchOptions.headers = { 'Authorization': `Bearer ${token}` };
       } else {
