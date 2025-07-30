@@ -380,10 +380,10 @@ export default function UserDashboard() {
         return;
       }
 
-      // Step 1: Upload image to /api/images and get imageId
+      // Step 1: Upload image to /api/images/upload and get imageId
       const formDataImage = new FormData();
       formDataImage.append('file', selectedPhoto.file);
-      const uploadResponse = await fetch('/api/images', {
+      const uploadResponse = await fetch('/api/images/upload', {
         method: 'POST',
         body: formDataImage,
       });
